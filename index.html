@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tifosi - Formula 1 Application</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;0,800;1,600;1,700;1,800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Titillium+Web:ital,wght@0,400;0,600;0,700;0,900;1,600;1,700;1,900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Chart.js for Lap Progression & Performance Graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="css/styles.css?v=1789921975">
+</head>
+
+<body class="f1-dark">
+
+    <!-- Top Global Header -->
+    <header class="f1-header">
+        <div class="header-brand">
+            <div class="brand-title">
+                <h1>TIFOSI</h1>
+                <p class="brand-subtitle">Tifosi - Formula 1 Application</p>
+            </div>
+        </div>
+
+        <div class="header-controls">
+            <!-- Global Season Dropdown (Top Level Control for all views) -->
+            <div class="global-season-container custom-season-dropdown-wrapper">
+                <span class="global-control-label"><i class="fa-solid fa-flag-checkered"></i> Season:</span>
+                <div class="custom-season-select-box" onclick="toggleSeasonDropdown()">
+                    <span id="selected-season-display">2026 Season</span>
+                    <i class="fa-solid fa-chevron-down season-chevron"></i>
+                </div>
+                <!-- Custom Scrollable Dropdown Menu (max-height: 260px) -->
+                <div class="custom-season-menu" id="custom-season-menu">
+                    <div class="season-options-list" id="season-options-list">
+                        <!-- Populated with all seasons 1950 - 2026 -->
+                    </div>
+                </div>
+                <!-- Hidden select for background compatibility -->
+                <select id="global-season-select" style="display: none;" onchange="onGlobalSeasonChange(this.value)">
+                </select>
+            </div>
+
+            <!-- Global Timezone Switcher -->
+            <div class="tz-switch-container">
+                <span class="tz-label"><i class="fa-regular fa-clock"></i> TZ:</span>
+                <div class="tz-toggle-group">
+                    <button id="tz-btn-wib" class="tz-btn active" onclick="setTimezone('WIB')">WIB (UTC+7)</button>
+                    <button id="tz-btn-utc" class="tz-btn" onclick="setTimezone('UTC')">UTC</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- App Main Container -->
+    <div class="f1-app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="f1-sidebar">
+            <div class="sidebar-top-header">
+                <span class="sidebar-top-label">MENU</span>
+                <button id="sidebar-toggle-btn" class="sidebar-collapse-btn" onclick="toggleSidebar()"
+                    title="Toggle Sidebar" aria-label="Toggle Sidebar">
+                    <i class="fa-solid fa-chevron-left icon-collapse"></i>
+                    <i class="fa-solid fa-chevron-right icon-expand"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">CORE RACING</div>
+                <button class="nav-item active" data-view="dashboard">
+                    <i class="fa-solid fa-gauge-high"></i> <span>Dashboard</span>
+                </button>
+                <button class="nav-item" data-view="calendar">
+                    <i class="fa-regular fa-calendar-days"></i> <span>Race Calendar</span>
+                </button>
+                <button class="nav-item" data-view="practices">
+                    <i class="fa-solid fa-stopwatch"></i> <span>Free Practice (FP1-3)</span>
+                </button>
+                <button class="nav-item" data-view="sprints">
+                    <i class="fa-solid fa-bolt"></i> <span>Sprint Weekends</span>
+                </button>
+                <button class="nav-item" data-view="standings">
+                    <i class="fa-solid fa-trophy"></i> <span>Championship Standings</span>
+                </button>
+
+                <div class="nav-section-title">GRAND PRIX WEEKEND</div>
+                <button class="nav-item" data-view="weekend-hub">
+                    <i class="fa-solid fa-flag-checkered"></i> <span>Race Weekend Hub</span>
+                </button>
+                <button class="nav-item" data-view="lap-chart-view">
+                    <i class="fa-solid fa-chart-line"></i> <span>Lap Chart Progression</span>
+                </button>
+
+                <div class="nav-section-title">DATABASE & STATS</div>
+                <button class="nav-item" data-view="drivers-db">
+                    <i class="fa-solid fa-user-astronaut"></i> <span>Drivers Directory</span>
+                </button>
+                <button class="nav-item" data-view="constructors-db">
+                    <i class="fa-solid fa-car"></i> <span>Constructors Directory</span>
+                </button>
+                <button class="nav-item" data-view="circuits-db">
+                    <i class="fa-solid fa-road"></i> <span>Circuits & Winners</span>
+                </button>
+                <button class="nav-item" data-view="analytics-master">
+                    <i class="fa-solid fa-chart-column"></i> <span>Advanced Analytics</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="f1-main-content">
+            <!-- View: Dashboard -->
+            <section id="view-dashboard" class="content-view active">
+                <div class="view-header">
+                    <div>
+                        <h2>Season Overview & Telemetry Dashboard</h2>
+                        <p class="text-muted">High-level statistics, championship leaders, and quick access to all Grand
+                            Prix telemetry for <strong class="current-season-display">2026 Season</strong>.</p>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fa-solid fa-trophy"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Drivers Leader</span>
+                            <h3 id="dash-driver-leader">-</h3>
+                            <p id="dash-driver-leader-pts" class="stat-sub">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fa-solid fa-car-tunnel"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Constructors Leader</span>
+                            <h3 id="dash-team-leader">-</h3>
+                            <p id="dash-team-leader-pts" class="stat-sub">-</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fa-solid fa-flag-checkered"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Races</span>
+                            <h3 id="dash-total-races">-</h3>
+                            <p id="dash-races-sub" class="stat-sub">Calendar Rounds</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fa-solid fa-road"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-label">Venues Visited</span>
+                            <h3 id="dash-total-circuits">-</h3>
+                            <p class="stat-sub">Worldwide Tracks</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dash-grid-two">
+                    <!-- Left: Upcoming / Recent Races in Season -->
+                    <div class="f1-card" id="dash-schedule-card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-calendar-check"></i> Season Grand Prix Schedule</h3>
+                            <button class="btn btn-sm btn-outline" onclick="switchView('calendar')">Full Calendar <i
+                                    class="fa-solid fa-arrow-right"></i></button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="f1-table" id="dash-races-table">
+                                    <thead>
+                                        <tr>
+                                            <th data-sort="round">Round <span class="sort-icon"></span></th>
+                                            <th data-sort="grand_prix_name">Grand Prix <span class="sort-icon"></span>
+                                            </th>
+                                            <th data-sort="circuit_name">Circuit <span class="sort-icon"></span></th>
+                                            <th data-sort="race_date">Race Date <span class="sort-icon"></span></th>
+                                            <th>Race Time</th>
+                                            <th data-sort="has_sprint">Format <span class="sort-icon"></span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4"><i
+                                                    class="fa-solid fa-spinner fa-spin"></i> Loading season races...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Top 5 Drivers Standings Preview & Next Race Card -->
+                    <div class="dash-right-col">
+                        <div class="f1-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-ranking-star"></i> Top 5 Driver Championship</h3>
+                                <button class="btn btn-sm btn-outline" onclick="switchView('standings')">Full Standings
+                                    <i class="fa-solid fa-arrow-right"></i></button>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="f1-table" id="dash-standings-table">
+                                        <thead>
+                                            <tr>
+                                                <th data-sort="championship_rank">Pos <span class="sort-icon"></span>
+                                                </th>
+                                                <th data-sort="driver_name">Driver <span class="sort-icon"></span></th>
+                                                <th data-sort="team_name">Constructor <span class="sort-icon"></span>
+                                                </th>
+                                                <th data-sort="total_wins">Wins <span class="sort-icon"></span></th>
+                                                <th data-sort="total_points" class="text-right">Points <span
+                                                        class="sort-icon"></span></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="5" class="text-center py-4"><i
+                                                        class="fa-solid fa-spinner fa-spin"></i> Loading standings...
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Next / Current Grand Prix Widget -->
+                        <div class="f1-card" id="dash-next-race-card">
+                            <div class="card-header flex-between">
+                                <h3 id="dash-next-status-title">
+                                    <i class="fa-solid fa-flag-checkered"></i> <span id="dash-next-status-text">Upcoming
+                                        Grand Prix</span>
+                                </h3>
+                                <span id="dash-next-live-badge" class="badge badge-f1">ROUND 1</span>
+                            </div>
+                            <div class="card-body">
+                                <div>
+                                    <h4 id="dash-next-gp-name"
+                                        style="font-family: var(--font-heading); font-size: 20px; color: #ffffff; margin-bottom: 2px;">
+                                        Loading...</h4>
+                                    <p id="dash-next-circuit" class="text-muted" style="font-size: 12px;">-</p>
+                                </div>
+
+                                <div class="session-schedule-matrix mt-3" id="dash-next-sessions">
+                                    <!-- Injected session rows with WIB/UTC -->
+                                </div>
+
+                                <div class="flex-between mt-3">
+                                    <span id="dash-next-countdown" class="badge badge-neutral"
+                                        style="font-size: 11px; font-family: var(--font-mono);"><i
+                                            class="fa-regular fa-clock"></i> Schedule</span>
+                                    <button id="dash-next-explore-btn" class="btn btn-sm btn-primary"
+                                        onclick="goToNextRaceHub()">
+                                        Weekend Hub <i class="fa-solid fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- View: Race Calendar -->
+            <section id="view-calendar" class="content-view">
+                <div class="view-header">
+                    <div>
+                        <h2>Complete Race Calendar (<span class="current-season-display">2026 Season</span>)</h2>
+                        <p class="text-muted">Full weekend timetable including Main Race, Qualifying, FP1, FP2, FP3, and
+                            Sprint Sessions in both WIB and UTC.</p>
+                    </div>
+                </div>
+
+                <div class="calendar-cards-scroll-container">
+                    <div id="calendar-container" class="calendar-cards-grid">
+                        <!-- Dynamic Calendar Race Cards -->
+                    </div>
+                </div>
+
+                <!-- Calendar Card Pagination Footer -->
+                <div class="card-footer pagination-footer mt-3" id="calendar-pagination">
+                    <!-- Rendered by JS -->
+                </div>
+            </section>
+
+            <!-- View: Free Practice (FP1-3) -->
+            <section id="view-practices" class="content-view">
+                <div class="view-header">
+                    <div>
+                        <h2>Free Practice Schedule (FP1, FP2, FP3)</h2>
+                        <p class="text-muted">Dedicated session timetable for Free Practice rounds per Grand Prix
+                            weekend.</p>
+                    </div>
+                    <div class="header-action-group">
+                        <select id="practice-round-select" class="f1-select" onchange="loadPracticeSessionData()">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <div id="practice-content-card" class="f1-card">
+                    <!-- Dynamic Practice Details -->
+                </div>
+            </section>
+
+            <!-- View: Sprint Weekends -->
+            <section id="view-sprints" class="content-view">
+                <div class="view-header">
+                    <div>
+                        <h2>Dedicated Sprint Race Weekends (<span class="current-season-display">2026 Season</span>)</h2>
+                        <p class="text-muted">Schedule and session breakdown for all Sprint event weekends in the
+                            selected championship season.</p>
+                    </div>
+                </div>
+
+                <div class="f1-card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="f1-table" id="sprint-schedule-table">
+                                <thead>
+                                    <tr>
+                                        <th data-sort="round">Round <span class="sort-icon"></span></th>
+                                        <th data-sort="grand_prix_name">Grand Prix <span class="sort-icon"></span></th>
+                                        <th data-sort="circuit_name">Circuit <span class="sort-icon"></span></th>
+                                        <th data-sort="sprint_date">Sprint Date <span class="sort-icon"></span></th>
+                                        <th>Sprint Time (<span class="tz-display">WIB</span>)</th>
+                                        <th data-sort="main_race_date">Main Race Date <span class="sort-icon"></span>
+                                        </th>
+                                        <th>Main Race Time (<span class="tz-display">WIB</span>)</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="8" class="text-center py-4">Select season to load sprint
+                                            schedule...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- View: Championship Standings -->
+            <section id="view-standings" class="content-view">
+                <div class="view-header">
+                    <div>
+                        <h2>Championship Standings</h2>
+                        <p class="text-muted">Live and historical Driver & Constructor Championship standings with
+                            points, wins, and team affiliations for <span class="current-season-display">2026 Season</span>.
+                        </p>
+                    </div>
+                    <div class="header-action-group">
+                        <div class="btn-group">
+                            <button id="btn-standings-drivers" class="btn btn-tab active"
+                                onclick="setStandingsTab('drivers')">Drivers Standings</button>
+                            <button id="btn-standings-constructors" class="btn btn-tab"
+                                onclick="setStandingsTab('constructors')">Constructors Standings</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="f1-card">
+                    <div class="card-header flex-between">
+                        <h3 id="standings-table-title"><i class="fa-solid fa-trophy"></i> Driver Standings</h3>
+                        <span id="standings-season-badge" class="badge badge-f1">Season 2023</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="f1-table" id="standings-main-table">
+                                <!-- Populated dynamically -->
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- View: Race Weekend Hub -->
+            <section id="view-weekend-hub" class="content-view">
+                <div class="view-header">
+                    <div>
+                        <h2>Grand Prix Weekend Hub</h2>
+                        <p class="text-muted">Race Results, Official Starting Grid with penalties & pit-lane starts,
+                            Qualifying Q1-Q3 breakdown, and Pit Stop telemetry.</p>
+                    </div>
+                    <div class="header-action-group">
+                        <select id="weekend-race-select" class="f1-select" onchange="onWeekendRaceSelected()">
+                            <!-- Races populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Weekend Sub-tabs -->
+                <div class="weekend-nav-tabs">
+                    <button class="weekend-tab active" data-tab="race-results" onclick="setWeekendTab('race-results')">
+                        <i class="fa-solid fa-flag-checkered"></i> Race Results
+                    </button>
+                    <button class="weekend-tab" data-tab="official-grid" onclick="setWeekendTab('official-grid')">
+                        <i class="fa-solid fa-bars-staggered"></i> Official Starting Grid
+                    </button>
+                    <button class="weekend-tab" data-tab="qualifying" onclick="setWeekendTab('qualifying')">
+                        <i class="fa-solid fa-stopwatch-20"></i> Qualifying (Q1-Q3)
+                    </button>
+                    <button class="weekend-tab" data-tab="sprint-results" onclick="setWeekendTab('sprint-results')">
+                        <i class="fa-solid fa-bolt"></i> Sprint Results
+                    </button>
+                    <button class="weekend-tab" data-tab="pit-stops" onclick="setWeekendTab('pit-stops')">
+                        <i class="fa-solid fa-wrench"></i> Pit Stops
+                    </button>
+                </div>
+
+                <!-- Weekend Tab Contents -->
+                <div class="f1-card mt-3">
+                    <div class="card-body p-0">
+                        <div id="weekend-tab-content" class="table-responsive">
+                            <!-- Dynamic Content -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- View: Lap-by-Lap Progression (Lap Chart Graph) -->
+            <section id="view-lap-chart-view" class="content-view">
+                <div class="view-header">
+                    <div>
+                        <h2>Lap-by-Lap Race Progression Chart</h2>
+                        <p class="text-muted">Interactive track position graph visualizing overtakes, pit stops, and
+                            race leader changes across all laps.</p>
+                    </div>
+                    <div class="header-action-group">
+                        <select id="lapchart-race-select" class="f1-select" onchange="loadLapChartData()">
+                            <!-- Races populated dynamically -->
+                        </select>
+
+                        <!-- Driver Checkbox Filter Dropdown -->
+                        <div class="driver-filter-dropdown-container">
+                            <button id="driver-filter-toggle-btn" class="f1-select driver-filter-btn"
+                                onclick="toggleDriverFilterDropdown()">
+                                <i class="fa-solid fa-users"></i> Drivers (<span id="driver-filter-count">All</span>) <i
+                                    class="fa-solid fa-chevron-down" style="font-size: 10px; margin-left: 4px;"></i>
+                            </button>
+                            <div class="driver-filter-menu" id="driver-filter-menu">
+                                <div class="filter-menu-header">
+                                    <span>Filter Drivers</span>
+                                    <div class="filter-actions">
+                                        <button type="button" class="btn-text-action"
+                                            onclick="selectAllDrivers(true)">All</button>
+                                        <button type="button" class="btn-text-action"
+                                            onclick="selectAllDrivers(false)">Clear</button>
+                                    </div>
+                                </div>
+                                <div class="filter-checkbox-list" id="driver-checkbox-list">
+                                    <!-- Populated dynamically with checkboxes -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="f1-card">
+                    <div class="card-header flex-between">
+                        <h3 id="lapchart-title"><i class="fa-solid fa-chart-line"></i> Lap Position Progression (P1 -
+                            P20)</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-wrapper">
+                            <canvas id="lapChartCanvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- View: Drivers Directory -->
+            <section id="view-drivers-db" class="content-view">
+                <div class="view-header">
+                    <div>
+                        <h2>Drivers Directory & Career Records</h2>
+                        <p class="text-muted">Complete historical driver archive, permanent numbers, career wins,
+                            podiums, and total career points.</p>
+                    </div>
+                    <div class="header-action-group">
+                        <input type="text" id="driver-search-input" class="f1-search"
+                            placeholder="Search driver by name or nationality..." oninput="onDriversSearch(this.value)">
+                    </div>
+                </div>
+
+                <div class="f1-card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="f1-table" id="drivers-directory-table">
+                                <thead>
+                                    <tr>
+                                        <th data-sort="permanent_number"># <span class="sort-icon"></span></th>
+                                        <th data-sort="driver_code">Code <span class="sort-icon"></span></th>
+                                        <th data-sort="full_name">Driver Name <span class="sort-icon"></span></th>
+                                        <th data-sort="nationality">Nationality <span class="sort-icon"></span></th>
+                                        <th data-sort="date_of_birth">Date of Birth <span class="sort-icon"></span></th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4"><i
+                                                class="fa-solid fa-spinner fa-spin"></i> Loading drivers...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Pagination Controls -->
+                    <div class="card-footer pagination-footer" id="drivers-pagination">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- View: Constructors Directory -->
+            <section id="view-constructors-db" class="content-view">
+                <div class="view-header">
+                    <div>
+                        <h2>Constructors / Teams Directory</h2>
+                        <p class="text-muted">Complete archive of all Formula 1 constructors and racing teams.</p>
+                    </div>
+                    <div class="header-action-group">
+                        <input type="text" id="constructor-search-input" class="f1-search"
+                            placeholder="Search constructor team..." oninput="onConstructorsSearch(this.value)">
+                    </div>
+                </div>
+
+                <div class="f1-card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="f1-table" id="constructors-directory-table">
+                                <thead>
+                                    <tr>
+                                        <th data-sort="constructorId">ID <span class="sort-icon"></span></th>
+                                        <th data-sort="constructor_name">Constructor Name <span
+                                                class="sort-icon"></span></th>
+                                        <th data-sort="constructor_nationality">Nationality <span
+                                                class="sort-icon"></span></th>
+                                        <th data-sort="constructorRef">Reference <span class="sort-icon"></span></th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4"><i
+                                                class="fa-solid fa-spinner fa-spin"></i> Loading constructors...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Pagination Controls -->
+                    <div class="card-footer pagination-footer" id="constructors-pagination">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- View: Circuits & Past Winners -->
+            <section id="view-circuits-db" class="content-view">
+                <div class="view-header">
+                    <div>
+                        <h2>Circuits Directory & Historical Winners</h2>
+                        <p class="text-muted">Explore world circuits, track locations, altitudes, and all past Grand
+                            Prix winners at each venue.</p>
+                    </div>
+                    <div class="header-action-group">
+                        <input type="text" id="circuit-search-input" class="f1-search"
+                            placeholder="Search circuit or country..." oninput="onCircuitsSearch(this.value)">
+                    </div>
+                </div>
+
+                <div class="f1-card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="f1-table" id="circuits-directory-table">
+                                <thead>
+                                    <tr>
+                                        <th data-sort="circuitId">ID <span class="sort-icon"></span></th>
+                                        <th data-sort="circuit_name">Circuit Name <span class="sort-icon"></span></th>
+                                        <th data-sort="location">Location <span class="sort-icon"></span></th>
+                                        <th data-sort="country">Country <span class="sort-icon"></span></th>
+                                        <th data-sort="altitude_meters">Altitude <span class="sort-icon"></span></th>
+                                        <th>History & Winners</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4"><i
+                                                class="fa-solid fa-spinner fa-spin"></i> Loading circuits...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Pagination Controls -->
+                    <div class="card-footer pagination-footer" id="circuits-pagination">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- View: Advanced Strategy & Performance Analytics -->
+            <section id="view-analytics-master" class="content-view">
+                <div class="view-header">
+                    <div>
+                        <h2>Strategy & Performance Analytics</h2>
+                        <p class="text-muted">Master telemetry insights separated by Seasonal Analytics (reacting to
+                            selected Season) and All-Time Historical Intelligence.</p>
+                    </div>
+                </div>
+
+                <!-- Analytics Category Tabs -->
+                <div class="analytics-category-tabs">
+                    <button class="analytics-cat-btn active" id="btn-cat-seasonal"
+                        onclick="setAnalyticsCategory('seasonal')">
+                        <i class="fa-solid fa-calendar-check"></i> Seasonal Performance (<span
+                            class="current-season-display">2026 Season</span>)
+                    </button>
+                    <button class="analytics-cat-btn" id="btn-cat-historical"
+                        onclick="setAnalyticsCategory('historical')">
+                        <i class="fa-solid fa-landmark"></i> All-Time & Historical Intelligence
+                    </button>
+                </div>
+
+                <!-- Sub-dropdown for Metrics -->
+                <div class="analytics-metric-bar">
+                    <div id="seasonal-metrics-container" class="metrics-selector-box">
+                        <label for="seasonal-metric-select"><i class="fa-solid fa-chart-line"></i> Select Seasonal
+                            Metric:</label>
+                        <select id="seasonal-metric-select" class="f1-select"
+                            onchange="loadAnalyticsFeature(this.value)">
+                            <option value="biggest-movers" selected>Greatest Comebacks & Positions Gained</option>
+                            <option value="pit-stops-eff">Pit Stop Efficiency & Duration by Team</option>
+                            <option value="teammate-quali">Teammate Qualifying Battles (Head-to-Head)</option>
+                            <option value="driver-form">Driver Rolling Form (Last 5 Races Moving Avg)</option>
+                            <option value="points-progression">Cumulative Season Points Trajectory</option>
+                        </select>
+                    </div>
+
+                    <div id="historical-metrics-container" class="metrics-selector-box" style="display: none;">
+                        <label for="historical-metric-select"><i class="fa-solid fa-trophy"></i> Select Historical
+                            Metric:</label>
+                        <select id="historical-metric-select" class="f1-select"
+                            onchange="loadAnalyticsFeature(this.value)">
+                            <option value="pole-to-win" selected>Pole-to-Win Conversion Rate (% of Pole Sitters Winning)
+                            </option>
+                            <option value="dnf-circuits">High DNF & Incident-Prone Tracks</option>
+                            <option value="deep-grid-wins">Miracle Wins from Deepest Grid (P10+)</option>
+                            <option value="most-laps-led">All-Time Laps Led (P1 Race Leaders)</option>
+                            <option value="fastest-speeds">Fastest Race Speed Traps Recorded in History</option>
+                            <option value="all-time-winners">All-Time Grand Prix Winners (Hall of Fame)</option>
+                            <option value="constructor-one-twos">Constructor 1-2 Finishes in History</option>
+                            <option value="youngest-winners">Youngest Race Winners in F1 History</option>
+                            <option value="circuit-masters">King of the Circuit (Mastery per Track)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="f1-card mt-3">
+                    <div class="card-header flex-between">
+                        <h3 id="analytics-card-title"><i class="fa-solid fa-chart-pie"></i> Analytics Result</h3>
+                        <span id="analytics-card-badge" class="badge badge-f1">Telemetry Metric</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive" id="analytics-table-container">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                    <div class="card-footer pagination-footer" id="analytics-pagination" style="display: none;">
+                        <!-- Pagination rendered if many rows -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Generic Modal for Driver Profile & Circuit History -->
+    <div class="modal-overlay" id="f1-modal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modal-title">Details</h3>
+                <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" id="modal-content">
+                <!-- Injected content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Files -->
+    <script src="js/config.js"></script>
+    <script src="js/api.js?v=1789919017"></script>
+    <script src="js/app.js?v=1789921975"></script>
+</body>
+
+</html>
