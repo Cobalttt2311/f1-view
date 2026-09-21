@@ -171,10 +171,10 @@ html, body.f1-dark {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.72);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    z-index: 1040;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 1500;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1968,25 +1968,53 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
         display: none !important;
     }
 
-    /* Transform Sidebar into Off-Canvas Sliding Drawer */
+    /* Transform Sidebar into Solid, Sharp Off-Canvas Sliding Drawer */
     .f1-sidebar {
-        position: fixed;
-        top: 0;
-        left: -290px;
-        width: 270px;
-        height: 100vh;
-        z-index: 1050;
-        background: #13131b;
-        box-shadow: none;
-        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        padding: 16px 12px;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
+        position: fixed !important;
+        top: 0 !important;
+        left: -300px !important;
+        width: 280px !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        z-index: 2000 !important;
+        background: #161622 !important;
+        background-color: #161622 !important;
+        border-right: 1px solid var(--f1-border) !important;
+        box-shadow: none !important;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        padding: 16px 14px !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     }
 
     .f1-sidebar.mobile-open {
-        left: 0;
-        box-shadow: 10px 0 35px rgba(0, 0, 0, 0.85);
+        left: 0 !important;
+        box-shadow: 15px 0 45px rgba(0, 0, 0, 0.95) !important;
+    }
+
+    .f1-sidebar .nav-item {
+        color: #d8d8e6 !important;
+        font-size: 13.5px !important;
+        padding: 10px 14px !important;
+    }
+
+    .f1-sidebar .nav-item i {
+        color: #8c8ca0 !important;
+    }
+
+    .f1-sidebar .nav-item.active {
+        color: #ffffff !important;
+        background: linear-gradient(90deg, rgba(225, 6, 0, 0.25) 0%, rgba(225, 6, 0, 0.05) 100%) !important;
+        border-left: 3px solid var(--f1-red) !important;
+    }
+
+    .f1-sidebar .nav-item.active i {
+        color: var(--f1-red) !important;
+    }
+
+    .f1-sidebar .nav-section-title {
+        color: #828298 !important;
+        font-size: 11px !important;
     }
 
     body.mobile-nav-open {
