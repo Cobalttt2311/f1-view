@@ -4,6 +4,23 @@ function toggleSidebar() {
     if (sidebar) sidebar.classList.toggle('collapsed');
 }
 
+function toggleMobileSidebar() {
+    const sidebar = document.getElementById('f1-sidebar');
+    const backdrop = document.getElementById('mobile-backdrop');
+    if (sidebar) sidebar.classList.toggle('mobile-open');
+    if (backdrop) backdrop.classList.toggle('active');
+    document.body.classList.toggle('mobile-nav-open');
+}
+
+function closeMobileSidebar() {
+    const sidebar = document.getElementById('f1-sidebar');
+    const backdrop = document.getElementById('mobile-backdrop');
+    if (sidebar) sidebar.classList.remove('mobile-open');
+    if (backdrop) backdrop.classList.remove('active');
+    document.body.classList.remove('mobile-nav-open');
+}
+
+
 
 const COUNTRY_CODES = {
     "Australia": "AUS", "China": "CHN", "Japan": "JPN", "Bahrain": "BHR", "Saudi Arabia": "KSA",
@@ -193,6 +210,7 @@ function switchView(viewName) {
     const targetSection = document.getElementById(`view-${viewName}`);
     if (targetSection) targetSection.classList.add('active');
 
+    closeMobileSidebar();
     loadActiveView();
 }
 

@@ -107,10 +107,104 @@ html, body.f1-dark {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mobile-menu-btn {
+    display: none;
+    background: var(--f1-carbon-800);
+    border: 1px solid var(--f1-border);
+    color: var(--f1-text-main);
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-f1);
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    transition: var(--transition);
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.mobile-menu-btn:hover {
+    background: var(--f1-red);
+    border-color: var(--f1-red);
+    color: #ffffff;
+    box-shadow: 0 0 10px var(--f1-red-glow);
+}
+
+.sidebar-ctrl-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sidebar-close-mobile-btn {
+    display: none;
+    background: var(--f1-carbon-800);
+    border: 1px solid var(--f1-border);
+    color: var(--f1-text-muted);
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+    padding: 0;
+}
+
+.sidebar-close-mobile-btn:hover {
+    background: var(--f1-red);
+    color: #ffffff;
+    border-color: var(--f1-red);
+}
+
+.mobile-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1040;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
 .header-brand {
     display: flex;
     align-items: center;
     gap: 12px;
+}
+
+.brand-logo-img {
+    width: 38px;
+    height: 38px;
+    object-fit: cover;
+    border-radius: var(--radius-f1);
+    border: 1.5px solid var(--f1-border);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    transition: var(--transition);
+}
+
+.brand-logo-img:hover {
+    border-color: var(--f1-red);
+    box-shadow: 0 0 12px var(--f1-red-glow);
+    transform: scale(1.05);
 }
 
 .brand-title {
@@ -1771,3 +1865,363 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
     opacity: 1 !important;
     background: #181c26 !important;
 }
+
+/* ==========================================================================
+   COMPREHENSIVE RESPONSIVE DESIGN SYSTEM (ALL DEVICES & SCREEN SIZES)
+   ========================================================================== */
+
+/* 1. Large Desktops & Laptops (max-width: 1200px) */
+@media (max-width: 1200px) {
+    .dash-grid-two {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .chart-wrapper {
+        height: 560px !important;
+        min-height: 520px !important;
+    }
+}
+
+/* 2. Tablets & Small Desktops (max-width: 992px) */
+@media (max-width: 992px) {
+    .mobile-menu-btn {
+        display: flex;
+    }
+
+    .sidebar-close-mobile-btn {
+        display: flex;
+    }
+
+    .sidebar-collapse-btn {
+        display: none !important;
+    }
+
+    /* Transform Sidebar into Off-Canvas Sliding Drawer */
+    .f1-sidebar {
+        position: fixed;
+        top: 0;
+        left: -290px;
+        width: 270px;
+        height: 100vh;
+        z-index: 1050;
+        background: #13131b;
+        box-shadow: none;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 16px 12px;
+    }
+
+    .f1-sidebar.mobile-open {
+        left: 0;
+        box-shadow: 10px 0 35px rgba(0, 0, 0, 0.85);
+    }
+
+    body.mobile-nav-open {
+        overflow: hidden;
+    }
+
+    .f1-app-container {
+        display: block;
+        width: 100%;
+        height: calc(100vh - 64px);
+    }
+
+    .f1-main-content {
+        width: 100%;
+        padding: 16px 18px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .chart-wrapper {
+        height: 480px !important;
+        min-height: 440px !important;
+    }
+
+    .calendar-cards-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+}
+
+/* 3. Mobile Landscape & Standard Smartphones (max-width: 768px) */
+@media (max-width: 768px) {
+    .f1-header {
+        height: 58px;
+        padding: 0 12px;
+    }
+
+    .f1-app-container {
+        height: calc(100vh - 58px);
+    }
+
+    .brand-logo-img {
+        width: 32px;
+        height: 32px;
+    }
+
+    .brand-logo-text {
+        font-size: 20px;
+        letter-spacing: 1px;
+    }
+
+    .brand-subtitle {
+        display: none;
+    }
+
+    .header-controls {
+        gap: 6px;
+    }
+
+    .global-control-label {
+        display: none;
+    }
+
+    .custom-season-select-box {
+        font-size: 12px;
+        gap: 4px;
+    }
+
+    .tz-label {
+        display: none;
+    }
+
+    .tz-btn {
+        padding: 3px 6px;
+        font-size: 10px;
+    }
+
+    .f1-main-content {
+        padding: 12px 10px;
+    }
+
+    .view-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+    .view-header h2 {
+        font-size: 19px;
+    }
+
+    .header-action-group {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .f1-select,
+    .f1-search {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    .driver-filter-dropdown-container {
+        width: 100%;
+    }
+
+    .driver-filter-btn {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .driver-filter-menu {
+        width: 100%;
+        min-width: 100%;
+        right: 0;
+        left: 0;
+    }
+
+    .btn-group {
+        width: 100%;
+        display: flex;
+    }
+
+    .btn-tab {
+        flex: 1;
+        text-align: center;
+        padding: 6px 8px;
+        font-size: 11px;
+    }
+
+    /* Weekend Sub-Tabs Horizontal Scroll */
+    .weekend-nav-tabs {
+        display: flex;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        gap: 6px;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .weekend-tab {
+        flex-shrink: 0;
+        padding: 8px 12px;
+        font-size: 11px;
+        white-space: nowrap;
+    }
+
+    /* Analytics Tabs */
+    .analytics-category-tabs {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .analytics-cat-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 9px 12px;
+        font-size: 11.5px;
+    }
+
+    .metrics-selector-box {
+        width: 100%;
+    }
+
+    .metrics-selector-box select {
+        width: 100%;
+    }
+
+    /* Lap Chart Canvas */
+    .chart-wrapper {
+        height: 380px !important;
+        min-height: 340px !important;
+    }
+
+    /* Modal Responsive Layout */
+    .modal-container {
+        width: calc(100% - 20px) !important;
+        max-width: calc(100% - 20px) !important;
+        margin: 10px auto !important;
+        max-height: 90vh !important;
+        border-radius: var(--radius-md) !important;
+    }
+
+    .modal-body {
+        padding: 14px !important;
+        max-height: calc(90vh - 56px) !important;
+        overflow-y: auto !important;
+    }
+
+    /* Calendar Grid */
+    .calendar-cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Table Responsive Adjustments */
+    .f1-table th,
+    .f1-table td {
+        padding: 8px 10px;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Pagination Footer */
+    .pagination-footer {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+/* 4. Small Smartphones (max-width: 480px) */
+@media (max-width: 480px) {
+    .f1-header {
+        height: 54px;
+        padding: 0 8px;
+    }
+
+    .f1-app-container {
+        height: calc(100vh - 54px);
+    }
+
+    .header-left {
+        gap: 8px;
+    }
+
+    .mobile-menu-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+
+    .brand-logo-img {
+        width: 28px;
+        height: 28px;
+    }
+
+    .brand-logo-text {
+        font-size: 17px;
+    }
+
+    .custom-season-dropdown-wrapper {
+        padding: 3px 6px;
+    }
+
+    .custom-season-select-box {
+        font-size: 11px;
+    }
+
+    .tz-btn {
+        padding: 2px 5px;
+        font-size: 9.5px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .stat-card {
+        padding: 10px 12px;
+    }
+
+    .stat-icon {
+        width: 34px;
+        height: 34px;
+        font-size: 14px;
+    }
+
+    .stat-info h3 {
+        font-size: 16px;
+    }
+
+    .stat-sub {
+        font-size: 10.5px;
+    }
+
+    .card-header {
+        padding: 10px 12px;
+    }
+
+    .card-header h3 {
+        font-size: 14px;
+    }
+
+    .card-body {
+        padding: 12px;
+    }
+
+    .chart-wrapper {
+        height: 320px !important;
+        min-height: 290px !important;
+    }
+
+    .session-schedule-matrix {
+        font-size: 11px;
+    }
+}

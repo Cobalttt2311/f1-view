@@ -5,6 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tifosi - Formula 1 Application</title>
+    <!-- Website Favicon & App Icons -->
+    <link rel="icon" type="image/jpeg" href="assets/logo.png">
+    <link rel="shortcut icon" type="image/jpeg" href="assets/logo.png">
+    <link rel="apple-touch-icon" href="assets/logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -20,10 +24,17 @@
 
     <!-- Top Global Header -->
     <header class="f1-header">
-        <div class="header-brand">
-            <div class="brand-title">
-                <h1>TIFOSI</h1>
-                <p class="brand-subtitle">Tifosi - Formula 1 Application</p>
+        <div class="header-left">
+            <button id="mobile-menu-btn" class="mobile-menu-btn" onclick="toggleMobileSidebar()"
+                aria-label="Toggle Navigation">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="header-brand">
+                <img src="assets/logo.png" alt="Tifosi Logo" class="brand-logo-img">
+                <div class="brand-title">
+                    <h1 class="brand-logo-text">TIFOSI</h1>
+                    <p class="brand-subtitle">Formula 1 Application</p>
+                </div>
             </div>
         </div>
 
@@ -57,17 +68,26 @@
         </div>
     </header>
 
+    <!-- Mobile Navigation Overlay Backdrop -->
+    <div id="mobile-backdrop" class="mobile-backdrop" onclick="closeMobileSidebar()"></div>
+
     <!-- App Main Container -->
     <div class="f1-app-container">
         <!-- Sidebar Navigation -->
-        <aside class="f1-sidebar">
+        <aside class="f1-sidebar" id="f1-sidebar">
             <div class="sidebar-top-header">
                 <span class="sidebar-top-label">MENU</span>
-                <button id="sidebar-toggle-btn" class="sidebar-collapse-btn" onclick="toggleSidebar()"
-                    title="Toggle Sidebar" aria-label="Toggle Sidebar">
-                    <i class="fa-solid fa-chevron-left icon-collapse"></i>
-                    <i class="fa-solid fa-chevron-right icon-expand"></i>
-                </button>
+                <div class="sidebar-ctrl-group">
+                    <button id="sidebar-close-btn" class="sidebar-close-mobile-btn" onclick="closeMobileSidebar()"
+                        title="Close Menu" aria-label="Close Menu">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <button id="sidebar-toggle-btn" class="sidebar-collapse-btn" onclick="toggleSidebar()"
+                        title="Toggle Sidebar" aria-label="Toggle Sidebar">
+                        <i class="fa-solid fa-chevron-left icon-collapse"></i>
+                        <i class="fa-solid fa-chevron-right icon-expand"></i>
+                    </button>
+                </div>
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-section-title">CORE RACING</div>
@@ -309,7 +329,8 @@
             <section id="view-sprints" class="content-view">
                 <div class="view-header">
                     <div>
-                        <h2>Dedicated Sprint Race Weekends (<span class="current-season-display">2026 Season</span>)</h2>
+                        <h2>Dedicated Sprint Race Weekends (<span class="current-season-display">2026 Season</span>)
+                        </h2>
                         <p class="text-muted">Schedule and session breakdown for all Sprint event weekends in the
                             selected championship season.</p>
                     </div>
@@ -350,7 +371,8 @@
                     <div>
                         <h2>Championship Standings</h2>
                         <p class="text-muted">Live and historical Driver & Constructor Championship standings with
-                            points, wins, and team affiliations for <span class="current-season-display">2026 Season</span>.
+                            points, wins, and team affiliations for <span class="current-season-display">2026
+                                Season</span>.
                         </p>
                     </div>
                     <div class="header-action-group">
