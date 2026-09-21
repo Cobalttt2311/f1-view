@@ -192,18 +192,16 @@ html, body.f1-dark {
 }
 
 .brand-logo-img {
-    width: 38px;
-    height: 38px;
-    object-fit: cover;
+    height: 36px;
+    width: auto;
+    max-height: 38px;
+    object-fit: contain;
     border-radius: var(--radius-f1);
-    border: 1.5px solid var(--f1-border);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
     transition: var(--transition);
 }
 
 .brand-logo-img:hover {
-    border-color: var(--f1-red);
-    box-shadow: 0 0 12px var(--f1-red-glow);
+    filter: drop-shadow(0 0 8px var(--f1-red-glow));
     transform: scale(1.05);
 }
 
@@ -845,7 +843,60 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
     flex-direction: column;
     justify-content: space-between;
     padding: 14px 16px;
+    gap: 12px;
 }
+
+.session-schedule-matrix {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.28);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    border: 1px solid var(--f1-border-subtle);
+}
+
+.session-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 12px;
+}
+
+.session-row:last-child {
+    border-bottom: none;
+}
+
+.session-name {
+    font-weight: 700;
+    font-family: var(--font-heading);
+    letter-spacing: 0.5px;
+    color: var(--f1-text-secondary);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.session-time-val {
+    color: var(--f1-text-muted);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    text-align: right;
+    word-break: break-word;
+}
+
+.flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 
 /* Tables & Sorting */
 .table-responsive {
@@ -1873,20 +1924,34 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
 /* 1. Large Desktops & Laptops (max-width: 1200px) */
 @media (max-width: 1200px) {
     .dash-grid-two {
+        display: grid;
         grid-template-columns: 1fr;
         gap: 16px;
     }
+
+    .dash-right-col {
+        height: auto;
+    }
+
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+
     .chart-wrapper {
         height: 560px !important;
-        min-height: 520px !important;
+        min-height: 500px !important;
     }
 }
 
 /* 2. Tablets & Small Desktops (max-width: 992px) */
 @media (max-width: 992px) {
+    html, body.f1-dark {
+        height: 100%;
+        min-height: 100vh;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
     .mobile-menu-btn {
         display: flex;
     }
@@ -1911,6 +1976,8 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
         box-shadow: none;
         transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         padding: 16px 12px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .f1-sidebar.mobile-open {
@@ -1923,14 +1990,42 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
     }
 
     .f1-app-container {
-        display: block;
+        display: flex;
+        flex-direction: column;
         width: 100%;
-        height: calc(100vh - 64px);
+        height: auto;
+        min-height: calc(100vh - 64px);
+        overflow: visible;
     }
 
     .f1-main-content {
+        flex: 1;
         width: 100%;
-        padding: 16px 18px;
+        height: auto;
+        overflow-y: visible;
+        overflow-x: hidden;
+        padding: 16px 14px;
+    }
+
+    .dash-grid-two {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        width: 100%;
+    }
+
+    .dash-right-col {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        width: 100%;
+        height: auto;
+    }
+
+    #dash-schedule-card,
+    #dash-next-race-card {
+        width: 100%;
+        height: auto;
     }
 
     .stats-grid {
@@ -1940,11 +2035,19 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
 
     .chart-wrapper {
         height: 480px !important;
-        min-height: 440px !important;
+        min-height: 420px !important;
     }
 
     .calendar-cards-grid {
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+
+    /* Prevent double scroll traps inside cards */
+    .table-responsive {
+        max-height: none !important;
+        overflow-y: visible !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
     }
 }
 
@@ -1956,12 +2059,13 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
     }
 
     .f1-app-container {
-        height: calc(100vh - 58px);
+        min-height: calc(100vh - 58px);
     }
 
     .brand-logo-img {
-        width: 32px;
-        height: 32px;
+        height: 30px;
+        width: auto;
+        max-height: 30px;
     }
 
     .brand-logo-text {
@@ -2002,12 +2106,17 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
     .view-header {
         flex-direction: column;
         align-items: stretch;
-        gap: 10px;
+        gap: 8px;
         margin-bottom: 12px;
     }
 
     .view-header h2 {
-        font-size: 19px;
+        font-size: 18px;
+        line-height: 1.2;
+    }
+
+    .view-header p {
+        font-size: 12px;
     }
 
     .header-action-group {
@@ -2056,7 +2165,7 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
         overflow-x: auto;
         flex-wrap: nowrap;
         gap: 6px;
-        padding-bottom: 4px;
+        padding-bottom: 6px;
         -webkit-overflow-scrolling: touch;
     }
 
@@ -2091,7 +2200,7 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
     /* Lap Chart Canvas */
     .chart-wrapper {
         height: 380px !important;
-        min-height: 340px !important;
+        min-height: 320px !important;
     }
 
     /* Modal Responsive Layout */
@@ -2115,6 +2224,10 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
     }
 
     /* Table Responsive Adjustments */
+    .f1-table {
+        min-width: 520px;
+    }
+
     .f1-table th,
     .f1-table td {
         padding: 8px 10px;
@@ -2146,7 +2259,7 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
     }
 
     .f1-app-container {
-        height: calc(100vh - 54px);
+        min-height: calc(100vh - 54px);
     }
 
     .header-left {
@@ -2160,8 +2273,9 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
     }
 
     .brand-logo-img {
-        width: 28px;
-        height: 28px;
+        height: 26px;
+        width: auto;
+        max-height: 26px;
     }
 
     .brand-logo-text {
@@ -2181,47 +2295,73 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
         font-size: 9.5px;
     }
 
+    .f1-main-content {
+        padding: 10px 8px;
+    }
+
     .stats-grid {
-        grid-template-columns: 1fr;
-        gap: 8px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
     }
 
     .stat-card {
-        padding: 10px 12px;
+        padding: 8px;
+        gap: 8px;
     }
 
     .stat-icon {
-        width: 34px;
-        height: 34px;
-        font-size: 14px;
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
     }
 
     .stat-info h3 {
-        font-size: 16px;
-    }
-
-    .stat-sub {
-        font-size: 10.5px;
-    }
-
-    .card-header {
-        padding: 10px 12px;
-    }
-
-    .card-header h3 {
         font-size: 14px;
     }
 
+    .stat-label {
+        font-size: 9px;
+    }
+
+    .stat-sub {
+        font-size: 9.5px;
+    }
+
+    .card-header {
+        padding: 8px 10px;
+    }
+
+    .card-header h3 {
+        font-size: 13.5px;
+    }
+
     .card-body {
-        padding: 12px;
+        padding: 10px;
     }
 
     .chart-wrapper {
         height: 320px !important;
-        min-height: 290px !important;
+        min-height: 280px !important;
     }
 
     .session-schedule-matrix {
+        padding: 6px 8px;
+    }
+
+    .session-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        padding: 4px 0;
+    }
+
+    .session-time-val {
+        text-align: left;
         font-size: 11px;
     }
-}
+
+    #dash-next-gp-name {
+        font-size: 16px !important;
+    }
+}
+

@@ -1,7 +1,7 @@
 # 🏎️ Tifosi - Formula 1 Analytics & Telemetry Web Dashboard
 
 <p align="center">
-  <img src="assets/logo.png" alt="Tifosi F1 Logo" width="120" style="border-radius: 12px;"/>
+  <img src="assets/logo.png" alt="Tifosi F1 Logo" width="150" style="max-width: 100%; height: auto;"/>
 </p>
 
 **Tifosi** is Formula 1 web application and telemetry dashboard. It provides comprehensive race analytics, live session schedules, historical championship archives (1950 – present), and interactive lap progression charts powered by an asynchronous RESTful API.
