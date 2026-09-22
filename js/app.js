@@ -1957,7 +1957,686 @@ function setAnalyticsCategory(cat) {
     loadAnalyticsFeature(metric);
 }
 
+
+// =========================================================================
+// DRIVER FORM INTERACTIVE LINE CHART (5-Race Moving Average)
+// =========================================================================
+let driverFormChartInstance = null;
+
+function toggleDriverFormFilterDropdown(e) {
+    if (e) e.stopPropagation();
+    const menu = document.getElementById('driverform-filter-menu');
+    if (menu) menu.classList.toggle('active');
+}
+
+// Close filter dropdown on outside click
+document.addEventListener('click', (e) => {
+    const container = document.getElementById('driverform-filter-container');
+    const menu = document.getElementById('driverform-filter-menu');
+    if (container && menu && !container.contains(e.target)) {
+        menu.classList.remove('active');
+    }
+});
+
+function selectAllDriverForm(checked) {
+    const checkboxes = document.querySelectorAll('.driverform-filter-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = checked;
+    });
+
+    if (driverFormChartInstance && driverFormChartInstance.data && driverFormChartInstance.data.datasets) {
+        driverFormChartInstance.data.datasets.forEach(ds => {
+            ds.hidden = !checked;
+        });
+        driverFormChartInstance.update();
+    }
+
+    updateDriverFormFilterCount();
+}
+
+function onDriverFormCheckboxChange(driverIdx, isChecked) {
+    if (driverFormChartInstance && driverFormChartInstance.data && driverFormChartInstance.data.datasets[driverIdx]) {
+        driverFormChartInstance.data.datasets[driverIdx].hidden = !isChecked;
+        driverFormChartInstance.update();
+    }
+    updateDriverFormFilterCount();
+}
+
+function updateDriverFormFilterCount() {
+    const checkboxes = document.querySelectorAll('.driverform-filter-checkbox');
+    const total = checkboxes.length;
+    const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+    const countEl = document.getElementById('driverform-filter-count');
+
+    if (countEl) {
+        if (checkedCount === total) {
+            countEl.textContent = 'All';
+        } else {
+            countEl.textContent = `${checkedCount}/${total}`;
+        }
+    }
+}
+
+async function renderDriverFormLineChart(year, container) {
+    if (driverFormChartInstance) {
+        driverFormChartInstance.destroy();
+        driverFormChartInstance = null;
+    }
+
+    const res = await F1Api.getDriverForm(year);
+    const data = res.data || [];
+
+    if (data.length === 0) {
+        container.innerHTML = `<div class="p-5 text-center text-muted">No rolling form data available for season ${year}.</div>`;
+        return;
+    }
+
+    // 1. Extract sorted unique rounds with Grand Prix labels
+    const roundMap = {};
+    data.forEach(r => {
+        if (!roundMap[r.round]) {
+            const shortGp = (r.grand_prix || '').replace(/ Grand Prix$/, '').replace(/ GP$/, '');
+            roundMap[r.round] = `R${r.round} ${shortGp}`;
+        }
+    });
+
+    const sortedRounds = Object.keys(roundMap).map(Number).sort((a, b) => a - b);
+    const roundLabels = sortedRounds.map(rnd => roundMap[rnd]);
+
+    // 2. Group by driver and map to rounds
+    const driversMap = {};
+    data.forEach(row => {
+        if (!driversMap[row.driver_name]) {
+            driversMap[row.driver_name] = {
+                name: row.driver_name,
+                pointsPerRound: {},
+                maxAvg: 0
+            };
+        }
+        const val = (row.rolling_avg_points_5_races !== null && row.rolling_avg_points_5_races !== undefined)
+            ? Number(Number(row.rolling_avg_points_5_races).toFixed(2))
+            : null;
+        driversMap[row.driver_name].pointsPerRound[row.round] = val;
+        if (val !== null && val > driversMap[row.driver_name].maxAvg) {
+            driversMap[row.driver_name].maxAvg = val;
+        }
+    });
+
+    // Sort drivers by highest peak form so key competitors appear first
+    const driverNames = Object.keys(driversMap).sort((a, b) => driversMap[b].maxAvg - driversMap[a].maxAvg);
+
+    const palette = [
+        '#e10600', '#00d2be', '#ffb800', '#ff8000', '#00d66c',
+        '#0090ff', '#ffffff', '#e000ff', '#33b3a6', '#c0c0c0',
+        '#e54d42', '#39b54a', '#a5673f', '#6739b6', '#f37b1d',
+        '#1cbbb4', '#9c26b0', '#8dc63f', '#0081ff', '#fbbd08',
+        '#d81b60', '#8e24aa', '#3949ab', '#00897b', '#7cb342'
+    ];
+
+    const defaultActiveCount = Math.min(6, driverNames.length);
+
+    const datasets = driverNames.map((driverName, idx) => {
+        const color = palette[idx % palette.length];
+        const dData = sortedRounds.map(rnd => {
+            const val = driversMap[driverName].pointsPerRound[rnd];
+            return val !== undefined ? val : null;
+        });
+
+        const isHiddenByDefault = idx >= defaultActiveCount;
+
+        return {
+            label: driverName,
+            data: dData,
+            borderColor: color,
+            backgroundColor: color,
+            borderWidth: 2.5,
+            pointRadius: 4,
+            pointHoverRadius: 7,
+            pointBackgroundColor: color,
+            pointBorderColor: '#15151e',
+            pointBorderWidth: 1.5,
+            tension: 0.3,
+            spanGaps: true,
+            hidden: isHiddenByDefault
+        };
+    });
+
+    // 3. Render Chart DOM Structure
+    container.innerHTML = `
+        <div class="p-3" style="background: rgba(0,0,0,0.15);">
+            <div class="flex-between flex-wrap gap-2 mb-2 pb-2" style="border-bottom: 1px solid var(--f1-border-subtle); justify-content: flex-end;">
+                <div class="driver-filter-dropdown-container" id="driverform-filter-container">
+                    <button class="btn btn-sm btn-outline driver-filter-btn" onclick="toggleDriverFormFilterDropdown(event)">
+                        <i class="fa-solid fa-users"></i> Filter Drivers (<span id="driverform-filter-count">${defaultActiveCount}/${driverNames.length}</span>) <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="driver-filter-menu" id="driverform-filter-menu">
+                        <div class="filter-menu-header">
+                            <span>Select Drivers</span>
+                            <div class="filter-actions">
+                                <button class="btn-text-action" onclick="selectAllDriverForm(true)">All</button>
+                                <button class="btn-text-action" onclick="selectAllDriverForm(false)">None</button>
+                            </div>
+                        </div>
+                        <div class="filter-checkbox-list" id="driverform-checkbox-list" style="max-height: 280px; overflow-y: auto;">
+                            ${driverNames.map((name, idx) => {
+                                const color = palette[idx % palette.length];
+                                const checked = idx < defaultActiveCount ? 'checked' : '';
+                                return `
+                                    <label class="driver-check-label">
+                                        <input type="checkbox" class="driverform-filter-checkbox" ${checked} onchange="onDriverFormCheckboxChange(${idx}, this.checked)">
+                                        <span class="driver-color-dot" style="background: ${color};"></span>
+                                        <span>${escapeHtml(name)}</span>
+                                    </label>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-wrapper" style="position: relative; height: 420px; width: 100%;">
+                <canvas id="driverFormChartCanvas"></canvas>
+            </div>
+        </div>
+    `;
+
+    updateDriverFormFilterCount();
+
+    // Compute dynamic peak value across all datasets
+    let globalPeak = 25;
+    data.forEach(r => {
+        if (r.rolling_avg_points_5_races && Number(r.rolling_avg_points_5_races) > globalPeak) {
+            globalPeak = Number(r.rolling_avg_points_5_races);
+        }
+    });
+    const calculatedMax = Math.ceil(globalPeak) + 3.5;
+
+    // 4. Initialize Chart.js
+    const ctx = document.getElementById('driverFormChartCanvas').getContext('2d');
+    driverFormChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: roundLabels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    top: 25,
+                    bottom: 20,
+                    left: 10,
+                    right: 15
+                }
+            },
+            interaction: {
+                mode: 'nearest',
+                intersect: false,
+                axis: 'x'
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(21, 21, 30, 0.95)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#e0e0e0',
+                    borderColor: 'rgba(225, 6, 0, 0.5)',
+                    borderWidth: 1,
+                    padding: 12,
+                    boxPadding: 6,
+                    callbacks: {
+                        label: function (context) {
+                            const val = context.parsed.y;
+                            return ` ${context.dataset.label}: ${val !== null ? val.toFixed(2) : '-'} pts/race (5-Race Avg)`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)'
+                    },
+                    ticks: {
+                        color: '#8b93a7',
+                        font: { family: 'Inter', size: 11, weight: '600' }
+                    }
+                },
+                y: {
+                    min: -1.8,
+                    max: calculatedMax,
+                    title: {
+                        display: true,
+                        text: '5-Race Moving Avg Points',
+                        color: '#8b93a7',
+                        font: { family: 'Inter', size: 12, weight: '700' }
+                    },
+                    grid: {
+                        color: function (context) {
+                            if (context.tick && (context.tick.value < 0 || context.tick.value > calculatedMax - 1)) return 'transparent';
+                            return 'rgba(255, 255, 255, 0.06)';
+                        }
+                    },
+                    ticks: {
+                        stepSize: 5,
+                        color: '#8b93a7',
+                        font: { family: 'Inter', size: 11 },
+                        callback: function (value) {
+                            if (value < 0 || value > calculatedMax - 1) return '';
+                            if (Number.isInteger(value)) {
+                                return value + ' pts';
+                            }
+                            return '';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+
+// =========================================================================
+// CUMULATIVE POINTS PROGRESSION INTERACTIVE LINE CHART
+// =========================================================================
+let pointsProgressionChartInstance = null;
+
+function togglePointsProgressionFilterDropdown(e) {
+    if (e) e.stopPropagation();
+    const menu = document.getElementById('pointsprog-filter-menu');
+    if (menu) menu.classList.toggle('active');
+}
+
+// Close filter dropdown on outside click
+document.addEventListener('click', (e) => {
+    const container = document.getElementById('pointsprog-filter-container');
+    const menu = document.getElementById('pointsprog-filter-menu');
+    if (container && menu && !container.contains(e.target)) {
+        menu.classList.remove('active');
+    }
+});
+
+function selectAllPointsProgression(checked) {
+    const checkboxes = document.querySelectorAll('.pointsprog-filter-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = checked;
+    });
+
+    if (pointsProgressionChartInstance && pointsProgressionChartInstance.data && pointsProgressionChartInstance.data.datasets) {
+        pointsProgressionChartInstance.data.datasets.forEach(ds => {
+            ds.hidden = !checked;
+        });
+        pointsProgressionChartInstance.update();
+    }
+
+    updatePointsProgressionFilterCount();
+}
+
+function onPointsProgressionCheckboxChange(driverIdx, isChecked) {
+    if (pointsProgressionChartInstance && pointsProgressionChartInstance.data && pointsProgressionChartInstance.data.datasets[driverIdx]) {
+        pointsProgressionChartInstance.data.datasets[driverIdx].hidden = !isChecked;
+        pointsProgressionChartInstance.update();
+    }
+    updatePointsProgressionFilterCount();
+}
+
+function updatePointsProgressionFilterCount() {
+    const checkboxes = document.querySelectorAll('.pointsprog-filter-checkbox');
+    const total = checkboxes.length;
+    const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+    const countEl = document.getElementById('pointsprog-filter-count');
+
+    if (countEl) {
+        if (checkedCount === total) {
+            countEl.textContent = 'All';
+        } else {
+            countEl.textContent = `${checkedCount}/${total}`;
+        }
+    }
+}
+
+async function renderPointsProgressionLineChart(year, container) {
+    if (pointsProgressionChartInstance) {
+        pointsProgressionChartInstance.destroy();
+        pointsProgressionChartInstance = null;
+    }
+
+    const res = await F1Api.getPointsProgression(year);
+    const data = res.data || [];
+
+    if (data.length === 0) {
+        container.innerHTML = `<div class="p-5 text-center text-muted">No points trajectory data available for season ${year}.</div>`;
+        return;
+    }
+
+    // 1. Extract sorted unique rounds with Grand Prix labels
+    const roundMap = {};
+    data.forEach(r => {
+        if (!roundMap[r.round]) {
+            const shortGp = (r.grand_prix || '').replace(/ Grand Prix$/, '').replace(/ GP$/, '');
+            roundMap[r.round] = `R${r.round} ${shortGp}`;
+        }
+    });
+
+    const sortedRounds = Object.keys(roundMap).map(Number).sort((a, b) => a - b);
+    const roundLabels = sortedRounds.map(rnd => roundMap[rnd]);
+
+    // 2. Group by driver and map cumulative points to rounds
+    const driversMap = {};
+    let globalPeakPts = 0;
+
+    data.forEach(row => {
+        if (!driversMap[row.driver_name]) {
+            driversMap[row.driver_name] = {
+                name: row.driver_name,
+                pointsPerRound: {},
+                totalPts: 0
+            };
+        }
+        const pts = (row.cumulative_season_points !== null && row.cumulative_season_points !== undefined)
+            ? Number(row.cumulative_season_points)
+            : 0;
+        driversMap[row.driver_name].pointsPerRound[row.round] = pts;
+        if (pts > driversMap[row.driver_name].totalPts) {
+            driversMap[row.driver_name].totalPts = pts;
+        }
+        if (pts > globalPeakPts) {
+            globalPeakPts = pts;
+        }
+    });
+
+    // Sort drivers by highest final championship points
+    const driverNames = Object.keys(driversMap).sort((a, b) => driversMap[b].totalPts - driversMap[a].totalPts);
+
+    const palette = [
+        '#e10600', '#00d2be', '#ffb800', '#ff8000', '#00d66c',
+        '#0090ff', '#ffffff', '#e000ff', '#33b3a6', '#c0c0c0',
+        '#e54d42', '#39b54a', '#a5673f', '#6739b6', '#f37b1d',
+        '#1cbbb4', '#9c26b0', '#8dc63f', '#0081ff', '#fbbd08',
+        '#d81b60', '#8e24aa', '#3949ab', '#00897b', '#7cb342'
+    ];
+
+    const defaultActiveCount = Math.min(6, driverNames.length);
+
+    const datasets = driverNames.map((driverName, idx) => {
+        const color = palette[idx % palette.length];
+        let lastKnownPts = 0;
+        const dData = sortedRounds.map(rnd => {
+            const val = driversMap[driverName].pointsPerRound[rnd];
+            if (val !== undefined) {
+                lastKnownPts = val;
+                return val;
+            }
+            return lastKnownPts;
+        });
+
+        const isHiddenByDefault = idx >= defaultActiveCount;
+
+        return {
+            label: driverName,
+            data: dData,
+            borderColor: color,
+            backgroundColor: color,
+            borderWidth: 2.5,
+            pointRadius: 4,
+            pointHoverRadius: 7,
+            pointBackgroundColor: color,
+            pointBorderColor: '#15151e',
+            pointBorderWidth: 1.5,
+            tension: 0.25,
+            spanGaps: true,
+            hidden: isHiddenByDefault
+        };
+    });
+
+    const calculatedMax = globalPeakPts > 0 ? Math.ceil(globalPeakPts * 1.08) : 50;
+    const yStep = globalPeakPts > 200 ? 50 : (globalPeakPts > 100 ? 25 : 10);
+    const bottomMin = -(Math.max(2, Math.ceil(calculatedMax * 0.05)));
+
+    // 3. Render Chart DOM Structure
+    container.innerHTML = `
+        <div class="p-3" style="background: rgba(0,0,0,0.15);">
+            <div class="flex-between flex-wrap gap-2 mb-2 pb-2" style="border-bottom: 1px solid var(--f1-border-subtle); justify-content: flex-end;">
+                <div class="driver-filter-dropdown-container" id="pointsprog-filter-container">
+                    <button class="btn btn-sm btn-outline driver-filter-btn" onclick="togglePointsProgressionFilterDropdown(event)">
+                        <i class="fa-solid fa-users"></i> Filter Drivers (<span id="pointsprog-filter-count">${defaultActiveCount}/${driverNames.length}</span>) <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="driver-filter-menu" id="pointsprog-filter-menu">
+                        <div class="filter-menu-header">
+                            <span>Select Drivers</span>
+                            <div class="filter-actions">
+                                <button class="btn-text-action" onclick="selectAllPointsProgression(true)">All</button>
+                                <button class="btn-text-action" onclick="selectAllPointsProgression(false)">None</button>
+                            </div>
+                        </div>
+                        <div class="filter-checkbox-list" id="pointsprog-checkbox-list" style="max-height: 280px; overflow-y: auto;">
+                            ${driverNames.map((name, idx) => {
+                                const color = palette[idx % palette.length];
+                                const checked = idx < defaultActiveCount ? 'checked' : '';
+                                const total = driversMap[name].totalPts;
+                                return `
+                                    <label class="driver-check-label">
+                                        <input type="checkbox" class="driverform-filter-checkbox pointsprog-filter-checkbox" ${checked} onchange="onPointsProgressionCheckboxChange(${idx}, this.checked)">
+                                        <span class="driver-color-dot" style="background: ${color};"></span>
+                                        <span>${escapeHtml(name)} <small class="text-muted" style="font-family: var(--font-mono); font-weight: 700;">(${total} PTS)</small></span>
+                                    </label>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-wrapper" style="position: relative; height: 430px; width: 100%;">
+                <canvas id="pointsProgressionChartCanvas"></canvas>
+            </div>
+        </div>
+    `;
+
+    updatePointsProgressionFilterCount();
+
+    // 4. Initialize Chart.js
+    const ctx = document.getElementById('pointsProgressionChartCanvas').getContext('2d');
+    pointsProgressionChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: roundLabels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    top: 25,
+                    bottom: 20,
+                    left: 10,
+                    right: 15
+                }
+            },
+            interaction: {
+                mode: 'nearest',
+                intersect: false,
+                axis: 'x'
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(21, 21, 30, 0.95)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#e0e0e0',
+                    borderColor: 'rgba(225, 6, 0, 0.5)',
+                    borderWidth: 1,
+                    padding: 12,
+                    boxPadding: 6,
+                    callbacks: {
+                        label: function (context) {
+                            const val = context.parsed.y;
+                            return ` ${context.dataset.label}: ${val} PTS (Cumulative)`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)'
+                    },
+                    ticks: {
+                        color: '#8b93a7',
+                        font: { family: 'Inter', size: 11, weight: '600' }
+                    }
+                },
+                y: {
+                    min: bottomMin,
+                    max: calculatedMax,
+                    title: {
+                        display: true,
+                        text: 'Cumulative Championship Points',
+                        color: '#8b93a7',
+                        font: { family: 'Inter', size: 12, weight: '700' }
+                    },
+                    grid: {
+                        color: function (context) {
+                            if (context.tick && (context.tick.value < 0 || context.tick.value > calculatedMax - 2)) return 'transparent';
+                            return 'rgba(255, 255, 255, 0.06)';
+                        }
+                    },
+                    ticks: {
+                        stepSize: yStep,
+                        color: '#8b93a7',
+                        font: { family: 'Inter', size: 11 },
+                        callback: function (value) {
+                            if (value < 0 || value > calculatedMax - 2) return '';
+                            return value + ' PTS';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+
+// =========================================================================
+// TEAMMATE QUALIFYING BATTLES (Visual Head-to-Head Duel Cards)
+// =========================================================================
+function renderTeammateBattleCards(data, container, year) {
+    if (!data || data.length === 0) {
+        container.innerHTML = `<div class="p-5 text-center text-muted">No teammate qualifying battle data recorded for season ${year}.</div>`;
+        return;
+    }
+
+    // Group drivers by Constructor Team
+    const teamGroups = {};
+    data.forEach(r => {
+        if (!teamGroups[r.team_name]) {
+            teamGroups[r.team_name] = [];
+        }
+        teamGroups[r.team_name].push(r);
+    });
+
+    const teamNames = Object.keys(teamGroups);
+
+    container.innerHTML = `
+        <div style="padding: 16px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px;">
+                ${teamNames.map(teamName => {
+                    const drivers = teamGroups[teamName];
+                    const d1 = drivers[0];
+                    const d2 = drivers[1] || { driver_name: 'No Teammate', outqualified_teammate_count: 0, total_sessions_entered: d1.total_sessions_entered };
+                    
+                    const score1 = Number(d1.outqualified_teammate_count) || 0;
+                    const score2 = Number(d2.outqualified_teammate_count) || 0;
+                    const totalDuels = (score1 + score2) || 1;
+                    const p1 = Math.round((score1 / totalDuels) * 100);
+                    const p2 = 100 - p1;
+                    const isTie = score1 === score2;
+
+                    return `
+                        <div class="race-card" style="background: linear-gradient(145deg, #1d1d2b 0%, #151520 100%); padding: 16px 18px; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <!-- Header -->
+                                <div class="flex-between" style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 8px; margin-bottom: 14px;">
+                                    <span style="font-family: var(--font-heading); font-weight: 800; font-size: 14px; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        <i class="fa-solid fa-car text-danger" style="margin-right: 6px;"></i> ${escapeHtml(teamName)}
+                                    </span>
+                                    <span class="badge badge-neutral" style="font-size: 10.5px; font-weight: 700;">
+                                        ${d1.total_sessions_entered} SESSIONS
+                                    </span>
+                                </div>
+
+                                <!-- Drivers Duel Row -->
+                                <div class="flex-between" style="align-items: center; margin-bottom: 14px;">
+                                    <!-- Driver 1 -->
+                                    <div style="text-align: left; flex: 1;">
+                                        <div style="font-size: 10.5px; color: ${score1 > score2 ? 'var(--f1-gold)' : 'var(--f1-text-muted)'}; font-weight: 800; text-transform: uppercase;">
+                                            ${score1 > score2 ? '<i class="fa-solid fa-crown"></i> LEADER' : (isTie ? 'TIED' : 'TRAILED')}
+                                        </div>
+                                        <div style="font-family: var(--font-heading); font-weight: 800; font-size: 15px; color: #ffffff; margin-top: 2px;">
+                                            ${escapeHtml(d1.driver_name)}
+                                        </div>
+                                        <div style="font-family: var(--font-mono); font-size: 26px; font-weight: 800; color: ${score1 >= score2 ? 'var(--f1-cyan)' : 'var(--f1-text-muted)'}; line-height: 1.1; margin-top: 4px;">
+                                            ${score1} <span style="font-size: 12px; color: var(--f1-text-muted); font-weight: 600;">WINS</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- VS Center Badge -->
+                                    <div style="text-align: center; padding: 0 12px;">
+                                        <span class="badge badge-f1" style="font-size: 11px; padding: 4px 8px; letter-spacing: 1px;">VS</span>
+                                    </div>
+
+                                    <!-- Driver 2 -->
+                                    <div style="text-align: right; flex: 1;">
+                                        <div style="font-size: 10.5px; color: ${score2 > score1 ? 'var(--f1-gold)' : 'var(--f1-text-muted)'}; font-weight: 800; text-transform: uppercase;">
+                                            ${score2 > score1 ? '<i class="fa-solid fa-crown"></i> LEADER' : (isTie ? 'TIED' : 'TRAILED')}
+                                        </div>
+                                        <div style="font-family: var(--font-heading); font-weight: 800; font-size: 15px; color: #ffffff; margin-top: 2px;">
+                                            ${escapeHtml(d2.driver_name)}
+                                        </div>
+                                        <div style="font-family: var(--font-mono); font-size: 26px; font-weight: 800; color: ${score2 >= score1 ? 'var(--f1-cyan)' : 'var(--f1-text-muted)'}; line-height: 1.1; margin-top: 4px;">
+                                            ${score2} <span style="font-size: 12px; color: var(--f1-text-muted); font-weight: 600;">WINS</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Dual Visual Split Progress Bar -->
+                                <div style="height: 8px; border-radius: 4px; background: rgba(255,255,255,0.06); overflow: hidden; display: flex; margin-bottom: 6px;">
+                                    <div style="width: ${p1}%; background: ${score1 >= score2 ? 'linear-gradient(90deg, var(--f1-red), var(--f1-cyan))' : 'rgba(255,255,255,0.2)'}; transition: width 0.4s ease;"></div>
+                                    <div style="width: ${p2}%; background: ${score2 > score1 ? 'linear-gradient(90deg, var(--f1-cyan), var(--f1-red))' : 'rgba(255,255,255,0.2)'}; transition: width 0.4s ease;"></div>
+                                </div>
+
+                                <div class="flex-between" style="font-size: 11px; font-family: var(--font-mono); color: var(--f1-text-muted);">
+                                    <span>${p1}% Dominance</span>
+                                    <span>${p2}% Dominance</span>
+                                </div>
+                            </div>
+
+                            ${drivers.length > 2 ? `
+                            <div style="margin-top: 10px; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,0.06); font-size: 10.5px; color: var(--f1-text-muted);">
+                                <i class="fa-solid fa-user-clock"></i> Reserve/Sub Drivers: ${drivers.slice(2).map(dr => `<strong>${escapeHtml(dr.driver_name)}</strong> (${dr.outqualified_teammate_count}W/${dr.total_sessions_entered})`).join(', ')}
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `;
+}
+
 async function loadAnalyticsFeature(featureKey) {
+    if (driverFormChartInstance) {
+        driverFormChartInstance.destroy();
+        driverFormChartInstance = null;
+    }
+    if (pointsProgressionChartInstance) {
+        pointsProgressionChartInstance.destroy();
+        pointsProgressionChartInstance = null;
+    }
     const container = document.getElementById('analytics-table-container');
     const title = document.getElementById('analytics-card-title');
     const badge = document.getElementById('analytics-card-badge');
@@ -1994,41 +2673,22 @@ async function loadAnalyticsFeature(featureKey) {
                 break;
 
             case 'teammate-quali':
-                title.innerHTML = `<i class="fa-solid fa-users-between-lines"></i> Teammate Qualifying Battles (${currentSeason})`;
-                badge.textContent = `Head-to-Head`;
+                title.innerHTML = `<i class="fa-solid fa-users-between-lines"></i> Teammate Qualifying Battles & Head-to-Head (${currentSeason})`;
+                badge.textContent = `Duel Battles`;
                 const tqRes = await F1Api.getTeammateQualifying(currentSeason);
-                renderSimpleAnalyticsTable(container, tqRes.data || [], [
-                    { label: 'Team Name', field: 'team_name' },
-                    { label: 'Driver', field: 'driver_name' },
-                    { label: 'Outqualified Teammate', field: 'outqualified_teammate_count', render: (r) => `<span class="badge badge-f1">${r.outqualified_teammate_count} Wins</span>` },
-                    { label: 'Total Sessions Entered', field: 'total_sessions_entered' }
-                ]);
+                renderTeammateBattleCards(tqRes.data || [], container, currentSeason);
                 break;
 
             case 'driver-form':
-                title.innerHTML = `<i class="fa-solid fa-chart-line"></i> Driver Rolling Form (Last 5 Races Moving Avg) (${currentSeason})`;
-                badge.textContent = `Form Index`;
-                const dfRes = await F1Api.getDriverForm(currentSeason);
-                renderSimpleAnalyticsTable(container, dfRes.data || [], [
-                    { label: 'Round', field: 'round', render: (r) => `R${r.round}` },
-                    { label: 'Grand Prix', field: 'grand_prix' },
-                    { label: 'Driver', field: 'driver_name' },
-                    { label: 'Race Points', field: 'points' },
-                    { label: '5-Race Rolling Avg Points', field: 'rolling_avg_points_5_races', render: (r) => `<span style="font-family: var(--font-mono); font-weight: bold; color: var(--f1-gold);">${Number(r.rolling_avg_points_5_races).toFixed(2)} pts/race</span>` }
-                ]);
+                title.innerHTML = `<i class="fa-solid fa-chart-line"></i> Driver Rolling Form Trend (5-Race Moving Avg) (${currentSeason})`;
+                badge.textContent = `Moving Avg Trend`;
+                await renderDriverFormLineChart(currentSeason, container);
                 break;
 
             case 'points-progression':
                 title.innerHTML = `<i class="fa-solid fa-arrow-trend-up"></i> Cumulative Season Points Trajectory (${currentSeason})`;
                 badge.textContent = `Championship Trajectory`;
-                const ppRes = await F1Api.getPointsProgression(currentSeason);
-                renderSimpleAnalyticsTable(container, ppRes.data || [], [
-                    { label: 'Round', field: 'round', render: (r) => `R${r.round}` },
-                    { label: 'Grand Prix', field: 'grand_prix' },
-                    { label: 'Driver', field: 'driver_name' },
-                    { label: 'Race Points', field: 'race_points' },
-                    { label: 'Cumulative Season Points', field: 'cumulative_season_points', render: (r) => `<span style="font-family: var(--font-mono); font-weight: bold;">${r.cumulative_season_points} PTS</span>` }
-                ]);
+                await renderPointsProgressionLineChart(currentSeason, container);
                 break;
 
             // Historical Intelligence Metrics
