@@ -135,16 +135,36 @@ function updateNextRaceWidget(races) {
     sessionsContainer.innerHTML = `
         <div class="session-row">
             <span class="session-name main-race"><i class="fa-solid fa-flag-checkered text-danger"></i> Main Race</span>
-            <span class="session-time-val">${targetRace.race_date || '-'} · ${formatSessionTime(targetRace.race_time_utc, targetRace.race_time_wib)}</span>
+            <span class="session-time-val">${targetRace.race_date || '-'} • ${formatSessionTime(targetRace.race_time_utc, targetRace.race_time_wib)}</span>
         </div>
+        ${(targetRace.quali_date || targetRace.quali_time_utc) ? `
         <div class="session-row">
             <span class="session-name"><i class="fa-solid fa-stopwatch text-warning"></i> Qualifying</span>
-            <span class="session-time-val">${targetRace.quali_date || '-'} · ${formatSessionTime(targetRace.quali_time_utc, targetRace.quali_time_wib)}</span>
+            <span class="session-time-val">${targetRace.quali_date || '-'} • ${formatSessionTime(targetRace.quali_time_utc, targetRace.quali_time_wib)}</span>
         </div>
-        ${targetRace.has_sprint ? `
+        ` : ''}
+        ${(targetRace.has_sprint || targetRace.sprint_date || targetRace.sprint_time_utc) ? `
         <div class="session-row">
             <span class="session-name" style="color: var(--f1-cyan);"><i class="fa-solid fa-bolt"></i> Sprint Race</span>
-            <span class="session-time-val">${targetRace.sprint_date || '-'} · ${formatSessionTime(targetRace.sprint_time_utc, targetRace.sprint_time_wib)}</span>
+            <span class="session-time-val">${targetRace.sprint_date || '-'} • ${formatSessionTime(targetRace.sprint_time_utc, targetRace.sprint_time_wib)}</span>
+        </div>
+        ` : ''}
+        ${(!targetRace.has_sprint && (targetRace.fp3_date || targetRace.fp3_time_utc)) ? `
+        <div class="session-row">
+            <span class="session-name"><i class="fa-solid fa-gauge"></i> Practice 3 (FP3)</span>
+            <span class="session-time-val">${targetRace.fp3_date || '-'} • ${formatSessionTime(targetRace.fp3_time_utc, targetRace.fp3_time_wib)}</span>
+        </div>
+        ` : ''}
+        ${(!targetRace.has_sprint && (targetRace.fp2_date || targetRace.fp2_time_utc)) ? `
+        <div class="session-row">
+            <span class="session-name"><i class="fa-solid fa-gauge"></i> Practice 2 (FP2)</span>
+            <span class="session-time-val">${targetRace.fp2_date || '-'} • ${formatSessionTime(targetRace.fp2_time_utc, targetRace.fp2_time_wib)}</span>
+        </div>
+        ` : ''}
+        ${(targetRace.fp1_date || targetRace.fp1_time_utc) ? `
+        <div class="session-row">
+            <span class="session-name"><i class="fa-solid fa-gauge"></i> Practice 1 (FP1)</span>
+            <span class="session-time-val">${targetRace.fp1_date || '-'} • ${formatSessionTime(targetRace.fp1_time_utc, targetRace.fp1_time_wib)}</span>
         </div>
         ` : ''}
     `;
@@ -697,20 +717,36 @@ function renderPaginatedCalendarCards() {
                     <span class="session-name main-race"><i class="fa-solid fa-flag-checkered text-danger"></i> Main Race</span>
                     <span class="session-time-val">${r.race_date || '-'} • ${formatSessionTime(r.race_time_utc, r.race_time_wib)}</span>
                 </div>
+                ${(r.quali_date || r.quali_time_utc) ? `
                 <div class="session-row">
                     <span class="session-name"><i class="fa-solid fa-stopwatch text-warning"></i> Qualifying</span>
                     <span class="session-time-val">${r.quali_date || '-'} • ${formatSessionTime(r.quali_time_utc, r.quali_time_wib)}</span>
                 </div>
-                ${r.has_sprint ? `
+                ` : ''}
+                ${(r.has_sprint || r.sprint_date || r.sprint_time_utc) ? `
                 <div class="session-row">
                     <span class="session-name" style="color: var(--f1-cyan);"><i class="fa-solid fa-bolt"></i> Sprint Race</span>
                     <span class="session-time-val">${r.sprint_date || '-'} • ${formatSessionTime(r.sprint_time_utc, r.sprint_time_wib)}</span>
                 </div>
                 ` : ''}
+                ${(!r.has_sprint && (r.fp3_date || r.fp3_time_utc)) ? `
+                <div class="session-row">
+                    <span class="session-name"><i class="fa-solid fa-gauge"></i> Practice 3 (FP3)</span>
+                    <span class="session-time-val">${r.fp3_date || '-'} • ${formatSessionTime(r.fp3_time_utc, r.fp3_time_wib)}</span>
+                </div>
+                ` : ''}
+                ${(!r.has_sprint && (r.fp2_date || r.fp2_time_utc)) ? `
+                <div class="session-row">
+                    <span class="session-name"><i class="fa-solid fa-gauge"></i> Practice 2 (FP2)</span>
+                    <span class="session-time-val">${r.fp2_date || '-'} • ${formatSessionTime(r.fp2_time_utc, r.fp2_time_wib)}</span>
+                </div>
+                ` : ''}
+                ${(r.fp1_date || r.fp1_time_utc) ? `
                 <div class="session-row">
                     <span class="session-name"><i class="fa-solid fa-gauge"></i> Practice 1 (FP1)</span>
                     <span class="session-time-val">${r.fp1_date || '-'} • ${formatSessionTime(r.fp1_time_utc, r.fp1_time_wib)}</span>
                 </div>
+                ` : ''}
             </div>
 
             <div class="flex-between mt-3">
