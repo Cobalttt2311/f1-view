@@ -2888,3 +2888,54 @@ function renderSimpleAnalyticsTable(container, rows, columns) {
         </table>
     `;
 }
+
+
+// ==============================================================================
+// Last Sync Metadata Controller (ETL Database Sync Status)
+// ==============================================================================
+let lastSyncMetadata = null;
+
+async function loadLastSyncStatus() {
+    const displayEl = document.getElementById('last-update-display');
+    const dotEl = document.getElementById('sync-status-dot');
+    if (!displayEl) return;
+
+    try {
+        const res = await F1Api.getLastSync();
+        if (res && res.success && res.data) {
+            lastSyncMetadata = res.data;
+            renderLastSyncDisplay();
+        } else {
+            displayEl.textContent = 'Up to date';
+            displayEl.classList.remove('loading');
+            if (dotEl) dotEl.innerHTML = '<span class="sync-dot pulse-green"></span>';
+        }
+    } catch (e) {
+        console.warn('Could not fetch last sync metadata:', e);
+        displayEl.textContent = 'Up to date';
+        displayEl.classList.remove('loading');
+        if (dotEl) dotEl.innerHTML = '<span class="sync-dot pulse-green"></span>';
+    }
+}
+
+function renderLastSyncDisplay() {
+    const displayEl = document.getElementById('last-update-display');
+    const dotEl = document.getElementById('sync-status-dot');
+    if (!displayEl || !lastSyncMetadata) return;
+
+    displayEl.classList.remove('loading');
+    
+    // Status color
+    const isSuccess = lastSyncMetadata.status === 'SUCCESS';
+    if (dotEl) {
+        dotEl.innerHTML = isSuccess 
+            ? '<span class="sync-dot pulse-green" title="Database Synced"></span>' 
+            : '<span class="sync-dot pulse-amber" title="Sync Status: ' + (lastSyncMetadata.status || 'Pending') + '"></span>';
+    }
+
+    if (currentTz === 'WIB') {
+        displayEl.textContent = lastSyncMetadata.last_synced_at_wib || lastSyncMetadata.last_synced_at_utc || 'Synced';
+    } else {
+        displayEl.textContent = lastSyncMetadata.last_synced_at_utc || lastSyncMetadata.last_synced_at_wib || 'Synced';
+    }
+}
