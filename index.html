@@ -39,6 +39,12 @@
         </div>
 
         <div class="header-controls">
+            <!-- Global Last Update Indicator -->
+            <div class="last-update-container" title="Latest Database Sync Timestamp">
+                <span class="last-update-label"><i class="fa-solid fa-arrows-rotate"></i> Last Updated:</span>
+                <span class="last-update-value" id="last-update-display"><i class="fa-solid fa-spinner fa-spin"></i></span>
+            </div>
+
             <!-- Global Season Dropdown (Top Level Control for all views) -->
             <div class="global-season-container custom-season-dropdown-wrapper">
                 <span class="global-control-label"><i class="fa-solid fa-flag-checkered"></i> Season:</span>
@@ -59,7 +65,7 @@
 
             <!-- Global Timezone Switcher -->
             <div class="tz-switch-container">
-                <span class="tz-label"><i class="fa-regular fa-clock"></i> TZ:</span>
+                <span class="tz-label"><i class="fa-regular fa-clock"></i> Time Zone:</span>
                 <div class="tz-toggle-group">
                     <button id="tz-btn-wib" class="tz-btn active" onclick="setTimezone('WIB')">WIB (UTC+7)</button>
                     <button id="tz-btn-utc" class="tz-btn" onclick="setTimezone('UTC')">UTC</button>

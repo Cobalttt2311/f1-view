@@ -348,6 +348,46 @@ html, body.f1-dark {
     font-weight: 800;
 }
 
+
+/* Last Updated Data Indicator */
+.last-update-container {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--f1-carbon-800);
+    padding: 4px 10px;
+    border-radius: var(--radius-f1);
+    border: 1px solid var(--f1-border);
+    white-space: nowrap;
+}
+
+.last-update-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--f1-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.last-update-label i {
+    color: var(--f1-red);
+    font-size: 10px;
+}
+
+.last-update-value {
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--f1-text-bright);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 /* Timezone Switcher */
 .tz-switch-container {
     display: flex;
@@ -2475,4 +2515,4 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
     }
 }
 
-
+

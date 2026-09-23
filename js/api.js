@@ -202,5 +202,11 @@ const F1Api = {
     async getCircuitMasters() {
         const res = await fetch(`${API_BASE}/analytics/circuit-masters`);
         return res.json();
+    },
+
+    // System & ETL Sync Metadata
+    async getLastSync() {
+        const res = await fetch(`${API_BASE}/analytics/last-sync`);
+        return res.json();
     }
 };

@@ -207,21 +207,70 @@ document.addEventListener('DOMContentLoaded', async () => {
     initGlobalTableSorting();
     await loadSeasonsList();
     initApiCheck();
+    loadLastSyncStatus();
     loadActiveView();
 });
 
-// Navigation Controller
+// View and URL Route Mappings
+const VIEW_ROUTES = {
+    'dashboard': 'dashboard',
+    'calendar': 'calendar',
+    'practices': 'practices',
+    'sprints': 'sprints',
+    'standings': 'standings',
+    'weekend-hub': 'weekend-hub',
+    'lap-chart-view': 'lap-chart',
+    'drivers-db': 'drivers',
+    'constructors-db': 'constructors',
+    'circuits-db': 'circuits',
+    'analytics-master': 'analytics'
+};
+
+const ROUTE_TO_VIEW = {
+    '': 'dashboard',
+    'dashboard': 'dashboard',
+    'calendar': 'calendar',
+    'practices': 'practices',
+    'sprints': 'sprints',
+    'standings': 'standings',
+    'weekend-hub': 'weekend-hub',
+    'lap-chart': 'lap-chart-view',
+    'lap-chart-view': 'lap-chart-view',
+    'drivers': 'drivers-db',
+    'drivers-db': 'drivers-db',
+    'constructors': 'constructors-db',
+    'constructors-db': 'constructors-db',
+    'circuits': 'circuits-db',
+    'circuits-db': 'circuits-db',
+    'analytics': 'analytics-master',
+    'analytics-master': 'analytics-master'
+};
+
+// Navigation Controller with URL Hash Routing
 function initNavigation() {
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
         item.addEventListener('click', () => {
             const targetView = item.getAttribute('data-view');
-            switchView(targetView);
+            switchView(targetView, true);
         });
     });
+
+    window.addEventListener('hashchange', handleHashRouting);
+    window.addEventListener('popstate', handleHashRouting);
+
+    if (window.location.hash) {
+        handleHashRouting();
+    }
 }
 
-function switchView(viewName) {
+function handleHashRouting() {
+    const rawHash = window.location.hash.replace(/^#\/?/, '').trim().split('?')[0].split('/')[0];
+    const targetView = ROUTE_TO_VIEW[rawHash] || 'dashboard';
+    switchView(targetView, false);
+}
+
+function switchView(viewName, updateUrl = true) {
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     const activeNav = document.querySelector(`.nav-item[data-view="${viewName}"]`);
     if (activeNav) activeNav.classList.add('active');
@@ -231,6 +280,14 @@ function switchView(viewName) {
     if (targetSection) targetSection.classList.add('active');
 
     closeMobileSidebar();
+
+    if (updateUrl) {
+        const route = VIEW_ROUTES[viewName] || viewName;
+        if (window.location.hash !== `#/${route}`) {
+            history.pushState(null, '', `#/${route}`);
+        }
+    }
+
     loadActiveView();
 }
 
@@ -381,6 +438,8 @@ function setTimezone(tz) {
     if (wibBtn) wibBtn.classList.toggle('active', tz === 'WIB');
     if (utcBtn) utcBtn.classList.toggle('active', tz === 'UTC');
     document.querySelectorAll('.tz-display').forEach(el => el.textContent = tz);
+    
+    renderLastSyncDisplay();
 
     const activeView = getActiveViewName();
     if (activeView === 'dashboard') {
