@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Chart.js for Lap Progression & Performance Graphs -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/styles.css?v=20260924v1">
+    <link rel="stylesheet" href="css/styles.css?v=20260924v2">
 </head>
 
 <body class="f1-dark">
@@ -39,14 +39,42 @@
         </div>
 
         <div class="header-controls">
-            <!-- Global Last Update Indicator -->
-                        <!-- Global Last Update Indicator -->
-            <div class="last-update-container" id="last-update-container" title="PostgreSQL Database Sync Status">
+                        <!-- Global Last Update Indicator with Hover Details -->
+            <div class="last-update-container" id="last-update-container" onclick="toggleSyncTooltip(event)">
                 <span class="sync-status-indicator" id="sync-status-dot">
                     <span class="sync-dot pulse-green"></span>
                 </span>
                 <span class="last-update-label">Last Updated:</span>
                 <span class="last-update-value loading" id="last-update-display">Loading...</span>
+
+                <!-- Hover Details Popover -->
+                <div class="sync-details-popover" id="sync-details-popover">
+                    <div class="popover-header">
+                        <i class="fa-solid fa-database text-cyan"></i>
+                        <span>ETL Database Sync Details</span>
+                    </div>
+                    <div class="popover-body">
+                        <div class="popover-row">
+                            <span class="popover-label">Status:</span>
+                            <span class="popover-val status-badge" id="popover-sync-status">SUCCESS</span>
+                        </div>
+                        <div class="popover-row">
+                            <span class="popover-label">WIB (UTC+7):</span>
+                            <span class="popover-val font-mono" id="popover-sync-wib">-</span>
+                        </div>
+                        <div class="popover-row">
+                            <span class="popover-label">UTC Time:</span>
+                            <span class="popover-val font-mono" id="popover-sync-utc">-</span>
+                        </div>
+                        <div class="popover-row">
+                            <span class="popover-label">Tables Synced:</span>
+                            <span class="popover-val font-mono" id="popover-sync-tables">14 tables</span>
+                        </div>
+                    </div>
+                    <div class="popover-footer">
+                        <i class="fa-solid fa-circle-check text-green"></i> Auto-synced from Kaggle to PostgreSQL
+                    </div>
+                </div>
             </div>
 
             <!-- Global Season Dropdown (Top Level Control for all views) -->
@@ -469,10 +497,12 @@
 
                         <!-- Driver Checkbox Filter Dropdown -->
                         <div class="driver-filter-dropdown-container">
-                            <button id="driver-filter-toggle-btn" class="f1-select driver-filter-btn"
-                                onclick="toggleDriverFilterDropdown()">
-                                <i class="fa-solid fa-users"></i> Drivers (<span id="driver-filter-count">All</span>) <i
-                                    class="fa-solid fa-chevron-down" style="font-size: 10px; margin-left: 4px;"></i>
+                            <button id="driver-filter-toggle-btn" class="f1-select driver-filter-btn" onclick="toggleDriverFilterDropdown()">
+                                <span class="driver-filter-btn-left">
+                                    <i class="fa-solid fa-users"></i>
+                                    <span>Drivers (<span id="driver-filter-count">All</span>)</span>
+                                </span>
+                                <i class="fa-solid fa-chevron-down" style="font-size: 10px; margin-left: 4px;"></i>
                             </button>
                             <div class="driver-filter-menu" id="driver-filter-menu">
                                 <div class="filter-menu-header">
@@ -725,9 +755,9 @@
     </div>
 
     <!-- JavaScript Files -->
-    <script src="js/config.js?v=20260924v1"></script>
-    <script src="js/api.js?v=20260924v1"></script>
-    <script src="js/app.js?v=20260924v1"></script>
+    <script src="js/config.js?v=20260924v2"></script>
+    <script src="js/api.js?v=20260924v2"></script>
+    <script src="js/app.js?v=20260924v2"></script>
 </body>
 
 </html>

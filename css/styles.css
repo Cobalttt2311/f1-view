@@ -351,6 +351,7 @@ html, body.f1-dark {
 
 /* Last Updated Data Indicator & Color Status */
 .last-update-container {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 7px;
@@ -360,11 +361,13 @@ html, body.f1-dark {
     border: 1px solid var(--f1-border);
     white-space: nowrap;
     transition: var(--transition-f1);
+    cursor: pointer;
     flex-shrink: 0;
 }
 
-.last-update-container:hover {
-    border-color: rgba(255, 255, 255, 0.2);
+.last-update-container:hover,
+.last-update-container.active {
+    border-color: rgba(255, 255, 255, 0.25);
     background: var(--f1-carbon-700);
 }
 
@@ -400,27 +403,15 @@ html, body.f1-dark {
 }
 
 @keyframes syncPulseGreen {
-    0% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-    }
-    70% {
-        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-    }
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
 }
 
 @keyframes syncPulseAmber {
-    0% {
-        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
-    }
-    70% {
-        box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
-    }
+    0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+    70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
 }
 
 .last-update-label {
@@ -445,18 +436,110 @@ html, body.f1-dark {
     align-items: center;
 }
 
-.last-update-value .sync-time-short {
-    display: none;
-}
-
-.last-update-value .sync-time-full {
-    display: inline;
-}
+.last-update-value .sync-time-short { display: none; }
+.last-update-value .sync-time-full { display: inline; }
 
 .last-update-value.loading {
     color: var(--f1-text-muted);
     background: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Hover Popover for Sync Details */
+.sync-details-popover {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 280px;
+    background: #141722;
+    border: 1px solid var(--f1-border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.75);
+    z-index: 1200;
+    padding: 12px;
+    text-align: left;
+    animation: menuFadeIn 0.15s ease-out;
+    pointer-events: none;
+    white-space: normal;
+}
+
+@media (hover: hover) {
+    .last-update-container:hover .sync-details-popover {
+        display: block;
+        pointer-events: auto;
+    }
+}
+
+.last-update-container.active .sync-details-popover {
+    display: block;
+    pointer-events: auto;
+}
+
+.popover-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    font-weight: 800;
+    font-family: var(--font-heading);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--f1-text-bright);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--f1-border);
+    margin-bottom: 8px;
+}
+
+.popover-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.popover-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+}
+
+.popover-label {
+    color: var(--f1-text-muted);
+    font-weight: 600;
+}
+
+.popover-val {
+    color: var(--f1-text-bright);
+    font-weight: 700;
+}
+
+.popover-val.status-badge {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.popover-footer {
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 10px;
+    color: var(--f1-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Driver Filter Button Inner Group */
+.driver-filter-btn-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
 }
 
 /* Timezone Switcher */
@@ -2303,20 +2386,32 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
         display: none;
     }
 
+    /* Scrollable Header Controls on Mobile */
     .header-controls {
         display: flex;
         align-items: center;
-        justify-content: flex-end;
-        gap: 5px;
+        justify-content: flex-start;
+        gap: 8px;
         flex-shrink: 1;
-        min-width: 0;
+        overflow-x: auto;
+        overflow-y: visible;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding: 4px 2px;
+        max-width: calc(100vw - 135px);
+    }
+
+    .header-controls::-webkit-scrollbar {
+        display: none;
     }
 
     /* Last Update on Mobile */
     .last-update-container {
-        padding: 3px 6px;
-        gap: 4px;
-        border-radius: 4px;
+        padding: 4px 8px;
+        gap: 5px;
+        border-radius: var(--radius-f1);
+        flex-shrink: 0;
     }
 
     .last-update-label {
@@ -2324,8 +2419,8 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
     }
 
     .last-update-value {
-        font-size: 10px;
-        padding: 2px 5px;
+        font-size: 11px;
+        padding: 2px 6px;
     }
 
     .last-update-value .sync-time-full {
@@ -2336,10 +2431,17 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
         display: inline;
     }
 
+    .sync-details-popover {
+        left: auto;
+        right: 0;
+        width: 260px;
+    }
+
     /* Season Dropdown on Mobile */
     .custom-season-dropdown-wrapper {
-        padding: 3px 6px;
-        gap: 4px;
+        padding: 4px 8px;
+        gap: 5px;
+        flex-shrink: 0;
     }
 
     .global-control-label {
@@ -2347,15 +2449,23 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
     }
 
     .custom-season-select-box {
-        font-size: 11px;
+        font-size: 11.5px;
         font-weight: 700;
-        gap: 3px;
+        gap: 4px;
+        cursor: pointer;
+    }
+
+    .custom-season-menu {
+        z-index: 1300;
+        right: 0;
+        min-width: 160px;
     }
 
     /* Timezone Switcher on Mobile */
     .tz-switch-container {
-        padding: 2px 4px;
-        gap: 2px;
+        padding: 3px 6px;
+        gap: 3px;
+        flex-shrink: 0;
     }
 
     .tz-label {
@@ -2363,8 +2473,8 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
     }
 
     .tz-btn {
-        padding: 2px 5px;
-        font-size: 9.5px;
+        padding: 3px 7px;
+        font-size: 10px;
         font-weight: 700;
     }
 

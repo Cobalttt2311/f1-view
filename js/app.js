@@ -1,4 +1,28 @@
 
+// Custom Season Dropdown Controller
+function toggleSeasonDropdown(event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    const wrapper = document.querySelector('.custom-season-dropdown-wrapper');
+    if (wrapper) {
+        wrapper.classList.toggle('active');
+    }
+}
+
+// Sync Details Popover Controller
+function toggleSyncTooltip(event) {
+    if (event) {
+        event.stopPropagation();
+    }
+    const container = document.getElementById('last-update-container');
+    if (container) {
+        container.classList.toggle('active');
+    }
+}
+
+
 function toggleSidebar() {
     const sidebar = document.querySelector('.f1-sidebar');
     if (sidebar) sidebar.classList.toggle('collapsed');
@@ -2151,7 +2175,7 @@ async function renderDriverFormLineChart(year, container) {
             <div class="flex-between flex-wrap gap-2 mb-2 pb-2" style="border-bottom: 1px solid var(--f1-border-subtle); justify-content: flex-end;">
                 <div class="driver-filter-dropdown-container" id="driverform-filter-container">
                     <button class="btn btn-sm btn-outline driver-filter-btn" onclick="toggleDriverFormFilterDropdown(event)">
-                        <i class="fa-solid fa-users"></i> Filter Drivers (<span id="driverform-filter-count">${defaultActiveCount}/${driverNames.length}</span>) <i class="fa-solid fa-chevron-down"></i>
+                        <span class="driver-filter-btn-left"><i class="fa-solid fa-users"></i><span>Filter Drivers (<span id="driverform-filter-count">${defaultActiveCount}/${driverNames.length}</span>)</span></span><i class="fa-solid fa-chevron-down"></i>
                     </button>
                     <div class="driver-filter-menu" id="driverform-filter-menu">
                         <div class="filter-menu-header">
@@ -2445,7 +2469,7 @@ async function renderPointsProgressionLineChart(year, container) {
             <div class="flex-between flex-wrap gap-2 mb-2 pb-2" style="border-bottom: 1px solid var(--f1-border-subtle); justify-content: flex-end;">
                 <div class="driver-filter-dropdown-container" id="pointsprog-filter-container">
                     <button class="btn btn-sm btn-outline driver-filter-btn" onclick="togglePointsProgressionFilterDropdown(event)">
-                        <i class="fa-solid fa-users"></i> Filter Drivers (<span id="pointsprog-filter-count">${defaultActiveCount}/${driverNames.length}</span>) <i class="fa-solid fa-chevron-down"></i>
+                        <span class="driver-filter-btn-left"><i class="fa-solid fa-users"></i><span>Filter Drivers (<span id="pointsprog-filter-count">${defaultActiveCount}/${driverNames.length}</span>)</span></span><i class="fa-solid fa-chevron-down"></i>
                     </button>
                     <div class="driver-filter-menu" id="pointsprog-filter-menu">
                         <div class="filter-menu-header">
@@ -2932,4 +2956,39 @@ function renderLastSyncDisplay() {
 
     displayEl.innerHTML = `<span class="sync-time-full">${rawStr}</span><span class="sync-time-short">${shortStr}</span>`;
     displayEl.setAttribute('title', `Last Synchronized: ${rawStr}`);
+
+    // Update Popover Details if present
+    const popStatus = document.getElementById('popover-sync-status');
+    const popWib = document.getElementById('popover-sync-wib');
+    const popUtc = document.getElementById('popover-sync-utc');
+    const popTables = document.getElementById('popover-sync-tables');
+
+    if (popStatus) {
+        popStatus.textContent = lastSyncMetadata.status || 'SUCCESS';
+    }
+    if (popWib) popWib.textContent = lastSyncMetadata.last_synced_at_wib || '-';
+    if (popUtc) popUtc.textContent = lastSyncMetadata.last_synced_at_utc || '-';
+    if (popTables) popTables.textContent = `${lastSyncMetadata.total_tables_synced || 14} tables`;
 }
+
+// Global outside click handler for dropdowns & popovers
+document.addEventListener('click', (e) => {
+    // 1. Season dropdown
+    const seasonWrapper = document.querySelector('.custom-season-dropdown-wrapper');
+    if (seasonWrapper && !seasonWrapper.contains(e.target)) {
+        seasonWrapper.classList.remove('active');
+    }
+
+    // 2. Sync tooltip popover
+    const syncContainer = document.getElementById('last-update-container');
+    if (syncContainer && !syncContainer.contains(e.target)) {
+        syncContainer.classList.remove('active');
+    }
+
+    // 3. Driver filters
+    const driverFilterContainer = document.querySelector('.driver-filter-dropdown-container');
+    const driverFilterMenu = document.getElementById('driver-filter-menu');
+    if (driverFilterContainer && driverFilterMenu && !driverFilterContainer.contains(e.target)) {
+        driverFilterMenu.classList.remove('active');
+    }
+});
