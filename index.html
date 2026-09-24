@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Chart.js for Lap Progression & Performance Graphs -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/styles.css?v=20260924v5">
+    <link rel="stylesheet" href="css/styles.css?v=20260924v8">
 </head>
 
 <body class="f1-dark">
@@ -47,11 +47,11 @@
                 <span class="last-update-label">Last Updated:</span>
                 <span class="last-update-value loading" id="last-update-display">Loading...</span>
 
-                <!-- Hover Details Popover -->
+                                <!-- Hover Details Popover (Status & Time only) -->
                 <div class="sync-details-popover" id="sync-details-popover">
                     <div class="popover-header">
-                        <i class="fa-solid fa-database text-cyan"></i>
-                        <span>ETL Database Sync Details</span>
+                        <i class="fa-solid fa-clock-rotate-left text-cyan"></i>
+                        <span>Database Sync Time</span>
                     </div>
                     <div class="popover-body">
                         <div class="popover-row">
@@ -63,16 +63,9 @@
                             <span class="popover-val font-mono" id="popover-sync-wib">-</span>
                         </div>
                         <div class="popover-row">
-                            <span class="popover-label">UTC Time:</span>
+                            <span class="popover-label">UTC:</span>
                             <span class="popover-val font-mono" id="popover-sync-utc">-</span>
                         </div>
-                        <div class="popover-row">
-                            <span class="popover-label">Tables Synced:</span>
-                            <span class="popover-val font-mono" id="popover-sync-tables">14 tables</span>
-                        </div>
-                    </div>
-                    <div class="popover-footer">
-                        <i class="fa-solid fa-circle-check text-green"></i> Auto-synced from Kaggle to PostgreSQL
                     </div>
                 </div>
             </div>
@@ -81,7 +74,7 @@
             <div class="global-season-container custom-season-dropdown-wrapper" onclick="toggleSeasonDropdown(event)">
                 <span class="global-control-label"><i class="fa-solid fa-flag-checkered"></i> Season:</span>
                 <div class="custom-season-select-box">
-                    <span id="selected-season-display">2026 Season</span>
+                    <span id="selected-season-display"><span class="season-full">2026 Season</span><span class="season-short">2026</span></span>
                     <i class="fa-solid fa-chevron-down season-chevron"></i>
                 </div>
                 <!-- Custom Scrollable Dropdown Menu (max-height: 260px) -->
@@ -99,7 +92,7 @@
             <div class="tz-switch-container">
                 <span class="tz-label"><i class="fa-regular fa-clock"></i> Time Zone:</span>
                 <div class="tz-toggle-group">
-                    <button id="tz-btn-wib" class="tz-btn active" onclick="setTimezone('WIB')">WIB (UTC+7)</button>
+                    <button id="tz-btn-wib" class="tz-btn active" onclick="setTimezone('WIB')"><span class="tz-full">WIB (UTC+7)</span><span class="tz-short">WIB</span></button>
                     <button id="tz-btn-utc" class="tz-btn" onclick="setTimezone('UTC')">UTC</button>
                 </div>
             </div>
@@ -755,9 +748,9 @@
     </div>
 
     <!-- JavaScript Files -->
-    <script src="js/config.js?v=20260924v5"></script>
-    <script src="js/api.js?v=20260924v5"></script>
-    <script src="js/app.js?v=20260924v5"></script>
+    <script src="js/config.js?v=20260924v8"></script>
+    <script src="js/api.js?v=20260924v8"></script>
+    <script src="js/app.js?v=20260924v8"></script>
 </body>
 
 </html>

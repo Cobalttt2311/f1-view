@@ -263,6 +263,12 @@ html, body.f1-dark {
     border-color: var(--f1-red);
 }
 
+
+.season-short { display: none; }
+.season-full { display: inline; }
+.tz-short { display: none; }
+.tz-full { display: inline; }
+
 .custom-season-select-box {
     display: flex;
     align-items: center;
@@ -2398,6 +2404,12 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
         position: relative;
     }
 
+    
+    .season-full { display: none !important; }
+    .season-short { display: inline !important; }
+    .tz-full { display: none !important; }
+    .tz-short { display: inline !important; }
+
     /* Last Update on Mobile */
     .last-update-container {
         padding: 4px 8px;
@@ -2447,7 +2459,13 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
         display: none;
     }
 
-    .custom-season-select-box {
+    
+.season-short { display: none; }
+.season-full { display: inline; }
+.tz-short { display: none; }
+.tz-full { display: inline; }
+
+.custom-season-select-box {
         font-size: 11.5px;
         font-weight: 700;
         gap: 4px;
@@ -2710,7 +2728,13 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
         padding: 3px 5px;
     }
 
-    .custom-season-select-box {
+    
+.season-short { display: none; }
+.season-full { display: inline; }
+.tz-short { display: none; }
+.tz-full { display: inline; }
+
+.custom-season-select-box {
         font-size: 10.5px;
     }
 

@@ -367,7 +367,7 @@ function loadActiveView() {
 
 function updateSeasonDisplayLabels() {
     const display = document.getElementById('selected-season-display');
-    if (display) display.textContent = `${currentSeason} Season`;
+    if (display) display.innerHTML = `<span class="season-full">${currentSeason} Season</span><span class="season-short">${currentSeason}</span>`;
 
     const hiddenSelect = document.getElementById('global-season-select');
     if (hiddenSelect) hiddenSelect.value = currentSeason;
@@ -384,7 +384,7 @@ function updateSeasonDisplayLabels() {
 function selectSeasonOption(year) {
     currentSeason = parseInt(year);
     const display = document.getElementById('selected-season-display');
-    if (display) display.textContent = `${year} Season`;
+    if (display) display.innerHTML = `<span class="season-full">${year} Season</span><span class="season-short">${year}</span>`;
     
     const hiddenSelect = document.getElementById('global-season-select');
     if (hiddenSelect) hiddenSelect.value = year;
@@ -411,7 +411,7 @@ async function loadSeasonsList() {
         if (allSeasonsCache.length > 0) {
             currentSeason = allSeasonsCache[0].year;
             const display = document.getElementById('selected-season-display');
-            if (display) display.textContent = `${currentSeason} Season`;
+            if (display) display.innerHTML = `<span class="season-full">${currentSeason} Season</span><span class="season-short">${currentSeason}</span>`;
 
             if (optionsList) {
                 optionsList.innerHTML = allSeasonsCache.map((s, idx) => `
