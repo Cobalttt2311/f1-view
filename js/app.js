@@ -353,24 +353,9 @@ function updateSeasonDisplayLabels() {
     });
 
     document.querySelectorAll('.current-season-display').forEach(el => {
-        el.textContent = currentSeason;
+        el.textContent = `${currentSeason}`;
     });
 }
-
-// Custom Season Dropdown Controller
-function toggleSeasonDropdown(e) {
-    if (e) e.stopPropagation();
-    const wrapper = document.querySelector('.custom-season-dropdown-wrapper');
-    if (wrapper) wrapper.classList.toggle('active');
-}
-
-// Close season dropdown on outside click
-document.addEventListener('click', (e) => {
-    const wrapper = document.querySelector('.custom-season-dropdown-wrapper');
-    if (wrapper && !wrapper.contains(e.target)) {
-        wrapper.classList.remove('active');
-    }
-});
 
 function selectSeasonOption(year) {
     currentSeason = parseInt(year);
@@ -2933,9 +2918,18 @@ function renderLastSyncDisplay() {
             : '<span class="sync-dot pulse-amber" title="Sync Status: ' + (lastSyncMetadata.status || 'Pending') + '"></span>';
     }
 
-    if (currentTz === 'WIB') {
-        displayEl.textContent = lastSyncMetadata.last_synced_at_wib || lastSyncMetadata.last_synced_at_utc || 'Synced';
-    } else {
-        displayEl.textContent = lastSyncMetadata.last_synced_at_utc || lastSyncMetadata.last_synced_at_wib || 'Synced';
+    const rawStr = currentTz === 'WIB' 
+        ? (lastSyncMetadata.last_synced_at_wib || lastSyncMetadata.last_synced_at_utc || 'Synced')
+        : (lastSyncMetadata.last_synced_at_utc || lastSyncMetadata.last_synced_at_wib || 'Synced');
+
+    let shortStr = rawStr;
+    const parts = rawStr.split(' ');
+    if (parts.length >= 3) {
+        const timePart = parts[1].substring(0, 5);
+        const tzPart = parts[2];
+        shortStr = `${timePart} ${tzPart}`;
     }
+
+    displayEl.innerHTML = `<span class="sync-time-full">${rawStr}</span><span class="sync-time-short">${shortStr}</span>`;
+    displayEl.setAttribute('title', `Last Synchronized: ${rawStr}`);
 }

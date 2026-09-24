@@ -360,6 +360,7 @@ html, body.f1-dark {
     border: 1px solid var(--f1-border);
     white-space: nowrap;
     transition: var(--transition-f1);
+    flex-shrink: 0;
 }
 
 .last-update-container:hover {
@@ -371,6 +372,7 @@ html, body.f1-dark {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .sync-dot {
@@ -439,6 +441,16 @@ html, body.f1-dark {
     border-radius: 4px;
     border: 1px solid rgba(16, 185, 129, 0.2);
     letter-spacing: 0.3px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.last-update-value .sync-time-short {
+    display: none;
+}
+
+.last-update-value .sync-time-full {
+    display: inline;
 }
 
 .last-update-value.loading {
@@ -446,7 +458,6 @@ html, body.f1-dark {
     background: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.1);
 }
-
 
 /* Timezone Switcher */
 .tz-switch-container {
@@ -2251,28 +2262,41 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
 /* 3. Mobile Landscape & Standard Smartphones (max-width: 768px) */
 @media (max-width: 768px) {
     .f1-header {
-        height: 58px;
+        height: 56px;
         padding: 0 10px;
         position: sticky;
         top: 0;
         z-index: 1000;
         width: 100%;
         max-width: 100vw;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
     }
 
     .f1-app-container {
-        min-height: calc(100vh - 58px) !important;
+        min-height: calc(100vh - 56px) !important;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
     }
 
     .brand-logo-img {
-        height: 30px;
+        height: 28px;
         width: auto;
-        max-height: 30px;
+        max-height: 28px;
+        flex-shrink: 0;
     }
 
     .brand-logo-text {
-        font-size: 20px;
+        font-size: 19px;
         letter-spacing: 1px;
+        white-space: nowrap;
     }
 
     .brand-subtitle {
@@ -2280,7 +2304,42 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
     }
 
     .header-controls {
-        gap: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 5px;
+        flex-shrink: 1;
+        min-width: 0;
+    }
+
+    /* Last Update on Mobile */
+    .last-update-container {
+        padding: 3px 6px;
+        gap: 4px;
+        border-radius: 4px;
+    }
+
+    .last-update-label {
+        display: none;
+    }
+
+    .last-update-value {
+        font-size: 10px;
+        padding: 2px 5px;
+    }
+
+    .last-update-value .sync-time-full {
+        display: none;
+    }
+
+    .last-update-value .sync-time-short {
+        display: inline;
+    }
+
+    /* Season Dropdown on Mobile */
+    .custom-season-dropdown-wrapper {
+        padding: 3px 6px;
+        gap: 4px;
     }
 
     .global-control-label {
@@ -2288,8 +2347,15 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
     }
 
     .custom-season-select-box {
-        font-size: 12px;
-        gap: 4px;
+        font-size: 11px;
+        font-weight: 700;
+        gap: 3px;
+    }
+
+    /* Timezone Switcher on Mobile */
+    .tz-switch-container {
+        padding: 2px 4px;
+        gap: 2px;
     }
 
     .tz-label {
@@ -2297,8 +2363,9 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
     }
 
     .tz-btn {
-        padding: 3px 6px;
-        font-size: 10px;
+        padding: 2px 5px;
+        font-size: 9.5px;
+        font-weight: 700;
     }
 
     .f1-main-content {
@@ -2378,7 +2445,7 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
         white-space: nowrap;
     }
 
-    /* Analytics Tabs */
+    /* Analytics Tabs & Metric Bar */
     .analytics-category-tabs {
         flex-direction: column;
         gap: 6px;
@@ -2391,12 +2458,35 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
         font-size: 11.5px;
     }
 
+    .analytics-metric-bar {
+        padding: 10px 12px;
+        margin-bottom: 12px;
+    }
+
     .metrics-selector-box {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
         width: 100%;
+    }
+
+    .metrics-selector-box label {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--f1-text-muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
     }
 
     .metrics-selector-box select {
         width: 100%;
+        max-width: 100%;
+        font-size: 12.5px;
+        padding: 8px 10px;
+        box-sizing: border-box;
     }
 
     /* Lap Chart Canvas */
@@ -2454,7 +2544,8 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
 @media (max-width: 480px) {
     .f1-header {
         height: 52px;
-        padding: 0 8px;
+        padding: 0 6px;
+        gap: 4px;
     }
 
     .f1-app-container {
@@ -2462,31 +2553,51 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
     }
 
     .header-left {
-        gap: 6px;
+        gap: 5px;
     }
 
     .mobile-menu-btn {
         width: 30px;
         height: 30px;
-        font-size: 13px;
+        font-size: 12px;
     }
 
     .brand-logo-img {
-        height: 24px;
+        height: 22px;
         width: auto;
-        max-height: 24px;
+        max-height: 22px;
     }
 
     .brand-logo-text {
-        font-size: 16px;
+        font-size: 15px;
+        letter-spacing: 0.5px;
+    }
+
+    .header-controls {
+        gap: 3px;
+    }
+
+    .last-update-container {
+        padding: 2px 4px;
+        gap: 3px;
+    }
+
+    .sync-dot {
+        width: 6px;
+        height: 6px;
+    }
+
+    .last-update-value {
+        font-size: 9.5px;
+        padding: 1px 4px;
     }
 
     .custom-season-dropdown-wrapper {
-        padding: 2px 5px;
+        padding: 2px 4px;
     }
 
     .custom-season-select-box {
-        font-size: 10.5px;
+        font-size: 10px;
     }
 
     .tz-btn {
@@ -2547,32 +2658,4 @@ body.sidebar-collapsed .nav-item i { font-size: 16px; margin: 0; }
         padding: 6px 8px;
         gap: 4px;
     }
-
-    .session-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 2px;
-        padding: 3px 0;
-    }
-
-    .session-time-val {
-        text-align: left;
-        font-size: 10.5px;
-    }
-
-    #dash-next-gp-name {
-        font-size: 15px !important;
-    }
-
-    #dash-standings-table th,
-    #dash-standings-table td {
-        padding: 6px 4px;
-        font-size: 11px;
-    }
-
-    #dash-standings-table .driver-code-pill {
-        display: none;
-    }
 }
-
-
