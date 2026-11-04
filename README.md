@@ -12,11 +12,11 @@
 
 This web application is the frontend client in the complete **Formula 1 End-to-End Analytics Platform**:
 
-| Component | Repository | Description |
-| :--- | :--- | :--- |
-| **🏎️ Frontend Web App (This Repo)** | [`f1-view`](https://github.com/Cobalttt2311/f1-view) | Interactive motorsport dashboard built with Vanilla JS & Chart.js |
-| **⚡ Backend REST API** | [**`f1-api`**](https://github.com/Cobalttt2311/f1-api) | High-performance FastAPI service connected to PostgreSQL |
-| **🔄 Data Pipeline (ETL)** | [**`f1-race-data`**](https://github.com/Cobalttt2311/f1-race-data) | Automated Kaggle-to-PostgreSQL data ingestion and synchronization pipeline |
+| Component                                   | Repository                                                                | Description                                                                |
+| :------------------------------------------ | :------------------------------------------------------------------------ | :------------------------------------------------------------------------- |
+| **🏎️ Frontend Web App (This Repo)** | [`f1-view`](https://github.com/Cobalttt2311/f1-view)                     | Interactive motorsport dashboard built with Vanilla JS & Chart.js          |
+| **⚡ Backend REST API**               | [**`f1-api`**](https://github.com/Cobalttt2311/f1-api)             | High-performance FastAPI service connected to PostgreSQL                   |
+| **🔄 Data Pipeline (ETL)**            | [**`f1-race-data`**](https://github.com/Cobalttt2311/f1-race-data) | Automated Kaggle-to-PostgreSQL data ingestion and synchronization pipeline |
 
 ---
 
@@ -70,12 +70,14 @@ This web application is the frontend client in the complete **Formula 1 End-to-E
 Because **Tifosi** is built with lightweight Vanilla JavaScript and CSS, no complex build tools or `npm install` steps are required.
 
 ### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/Cobalttt2311/f1-view.git
 cd f1-view
 ```
 
 ### 2. Configure Backend API Endpoint
+
 Open [`js/config.js`](file:///d:/Eksplorasi/f1-view/js/config.js) and set your target backend URL:
 
 ```javascript
@@ -109,26 +111,32 @@ if (typeof window !== 'undefined') {
 You can launch the project using any of the methods below:
 
 #### Option A: Using VS Code Live Server (Recommended)
+
 1. Open the `f1-view` folder in **Visual Studio Code**.
 2. Install the **Live Server** extension (if not already installed).
 3. Right-click on `index.html` and select **"Open with Live Server"**.
 
 #### Option B: Using Python Local Server
+
 ```bash
 # Python 3
 python -m http.server 5500
 ```
+
 Open your browser and navigate to:
+
 ```text
 http://127.0.0.1:5500
 ```
 
 #### Option C: Using Node.js `serve` / `http-server`
+
 ```bash
 npx serve .
 ```
 
 #### Option D: Direct Browser Open
+
 Simply double-click `index.html` to open it directly in Google Chrome, Mozilla Firefox, Microsoft Edge, or Safari.
 
 ---
@@ -191,4 +199,4 @@ f1-view/
 * **Data Source**: [Formula 1 Race Data by James Trotman](https://www.kaggle.com/datasets/jtrotman/formula-1-race-data) on Kaggle.
 * **License**: This project is developed for educational and portfolio demonstration purposes.
 
-Made with ❤️ by [Cobalt](https://github.com/Cobalttt2311)
+Made with ❤️ by [Cobalt](https://github.com/Cobalttt2311) and [Saga](https://github.com/basganajaah)
