@@ -214,7 +214,6 @@ export const TEAM_COLORS = {
   default: "#E10600",
 };
 
-
 // export const TEAM_COLORS = {
 //   // 2026 Formula 1 Teams
 //   mercedes: "#00D2BE",
@@ -245,35 +244,30 @@ export const TEAM_COLORS = {
 
 export const HISTORICAL_DRIVER_COLOR = "#C5A059";
 
-// Active 2024-2026 driver code to constructor key mapping
 export const ACTIVE_DRIVER_TEAMS = {
   VER: "red_bull",
-  PER: "red_bull",
-  HAM: "ferrari", // or mercedes depending on season
-  RUS: "mercedes",
-  ANT: "mercedes",
+  HAD: "red_bull", // 2026
   LEC: "ferrari",
-  SAI: "williams",
+  HAM: "ferrari", // 2026
   NOR: "mclaren",
   PIA: "mclaren",
+  RUS: "mercedes",
+  ANT: "mercedes", // 2026
   ALO: "aston_martin",
   STR: "aston_martin",
   GAS: "alpine",
-  DOO: "alpine",
-  OCO: "haas",
-  BEA: "haas",
+  COL: "alpine", // 2026
+  BEA: "haas", // 2026
+  OCO: "haas", // 2026
   ALB: "williams",
-  COL: "williams",
+  SAI: "williams", // 2026
+  LIN: "racing_bulls", // 2026 (Lindblad)
+  LAW: "racing_bulls", // 2026
   TSU: "racing_bulls",
-  LAW: "racing_bulls",
-  HAD: "racing_bulls",
-  RIC: "racing_bulls",
-  HUL: "kick_sauber",
-  BOR: "kick_sauber",
-  BOT: "kick_sauber",
-  ZHO: "kick_sauber",
-  MAG: "haas",
-  SAR: "williams",
+  HUL: "audi", // 2026
+  BOR: "audi", // 2026
+  BOT: "cadillac", // 2026
+  PER: "cadillac", // 2026
 };
 
 export function getTeamColor(teamName = "") {

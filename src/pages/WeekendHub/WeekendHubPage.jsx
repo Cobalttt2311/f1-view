@@ -194,7 +194,7 @@ export default function WeekendHubPage() {
           {isLoading ? (
             <div
               style={{
-                padding: "60px 20px",
+                padding: "2rem 1rem",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",

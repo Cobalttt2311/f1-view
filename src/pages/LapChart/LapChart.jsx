@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import F1Select from '../../components/common/F1Select';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useMemo, useRef, useEffect } from "react";
+import F1Select from "../../components/common/F1Select";
+import { useQuery } from "@tanstack/react-query";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -10,12 +10,12 @@ import {
   Title,
   Tooltip,
   Legend,
-} from 'chart.js';
-import { Line } from 'react-chartjs-2';
-import { useSeason } from '../../context/SeasonContext';
-import { F1Api } from '../../api/client';
-import { getDriverColor } from '../../utils/teamColors';
-import DriverBadge from '../../components/common/DriverBadge';
+} from "chart.js";
+import { Line } from "react-chartjs-2";
+import { useSeason } from "../../context/SeasonContext";
+import { F1Api } from "../../api/client";
+import { getDriverColor } from "../../utils/teamColors";
+import DriverBadge from "../../components/common/DriverBadge";
 
 ChartJS.register(
   CategoryScale,
@@ -24,7 +24,7 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
 );
 
 export default function LapChart() {
@@ -41,13 +41,13 @@ export default function LapChart() {
         setIsFilterOpen(false);
       }
     }
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
   // Fetch season calendar for round dropdown
   const { data: races = [] } = useQuery({
-    queryKey: ['raceCalendar', season],
+    queryKey: ["raceCalendar", season],
     queryFn: async () => {
       const res = await F1Api.getRaceCalendar(season);
       return res?.data || res || [];
@@ -56,7 +56,7 @@ export default function LapChart() {
 
   // Fetch lap progression telemetry
   const { data: rawLaps = [], isLoading } = useQuery({
-    queryKey: ['lapChart', season, selectedRound],
+    queryKey: ["lapChart", season, selectedRound],
     queryFn: async () => {
       const res = await F1Api.getLapChart(season, selectedRound);
       return res?.data || res || [];
@@ -64,21 +64,42 @@ export default function LapChart() {
     enabled: !!selectedRound,
   });
 
+  const { data: raceResults = [] } = useQuery({
+    queryKey: ["raceResultforLapChart", season, selectedRound],
+    queryFn: async () => {
+      const res = await F1Api.getRaceResults(season, selectedRound);
+      return res?.data || res || [];
+    },
+    enabled: !!selectedRound,
+  });
+
   // Transform data for Chart.js
   const chartData = useMemo(() => {
-    if (!rawLaps || !Array.isArray(rawLaps) || rawLaps.length === 0) return null;
+    if (!rawLaps || !Array.isArray(rawLaps) || rawLaps.length === 0)
+      return null;
+
+    const teamLookup = {};
+    raceResults.forEach((r) => {
+      if (r.driver_code) teamLookup[r.driver_code] = r.team_name;
+      if (r.driver_name) teamLookup[r.driver_name] = r.team_name;
+    });
 
     const driverMap = {};
     let maxLap = 0;
     let maxPosition = 20;
 
     rawLaps.forEach((row) => {
-      const driver = row.driver_name || row.driver || 'Unknown';
+      const driver = row.driver_name || row.driver || "Unknown";
       if (!driverMap[driver]) {
         driverMap[driver] = {
           code: row.driver_code || driver.substring(0, 3).toUpperCase(),
           fullName: driver,
-          team: row.team_name || row.constructor_name || '',
+          team:
+            row.team_name ||
+            row.constructor_name ||
+            teamLookup[row.driver_code] ||
+            teamLookup[row.driver_name] ||
+            "",
           positions: {},
         };
       }
@@ -123,8 +144,15 @@ export default function LapChart() {
       };
     });
 
-    return { labels, datasets, driverNames: drivers, driverMap, maxLap, maxPosition };
-  }, [rawLaps, selectedDrivers, season]);
+    return {
+      labels,
+      datasets,
+      driverNames: drivers,
+      driverMap,
+      maxLap,
+      maxPosition,
+    };
+  }, [rawLaps, selectedDrivers, season, raceResults]);
 
   const toggleDriver = (name) => {
     setSelectedDrivers((prev) => ({
@@ -148,25 +176,25 @@ export default function LapChart() {
   const totalDrivers = chartData ? chartData.driverNames.length : 0;
   const filterLabel =
     totalDrivers > 0 && selectedCount === totalDrivers
-      ? 'All'
+      ? "All"
       : `${selectedCount}/${totalDrivers}`;
 
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    interaction: { mode: 'index', intersect: false },
+    interaction: { mode: "index", intersect: false },
     scales: {
       x: {
-        grid: { color: 'rgba(255, 255, 255, 0.05)' },
-        ticks: { color: '#8b93a7', font: { family: 'Inter', size: 11 } },
+        grid: { color: "rgba(255, 255, 255, 0.05)" },
+        ticks: { color: "#8b93a7", font: { family: "Inter", size: 11 } },
       },
       y: {
         reverse: true, // P1 on top
         min: 1,
         max: chartData ? chartData.maxPosition + 1 : 22,
-        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+        grid: { color: "rgba(255, 255, 255, 0.05)" },
         ticks: {
-          color: '#8b93a7',
+          color: "#8b93a7",
           stepSize: 1,
           callback: (val) => `P${val}`,
         },
@@ -174,7 +202,10 @@ export default function LapChart() {
     },
     plugins: {
       legend: {
-        labels: { color: '#e0e0ea', font: { family: 'Barlow Condensed', size: 12 } },
+        labels: {
+          color: "#e0e0ea",
+          font: { family: "Barlow Condensed", size: 12 },
+        },
       },
       tooltip: {
         callbacks: {
@@ -190,7 +221,8 @@ export default function LapChart() {
         <div>
           <h2>Lap-by-Lap Race Progression Chart</h2>
           <p className="text-muted">
-            Interactive track position graph visualizing overtakes, pit stops, and race leader changes across all laps.
+            Interactive track position graph visualizing overtakes, pit stops,
+            and race leader changes across all laps.
           </p>
         </div>
         <div className="header-action-group">
@@ -208,7 +240,7 @@ export default function LapChart() {
           {/* Driver Checkbox Filter Dropdown */}
           <div
             ref={filterRef}
-            className={`driver-filter-dropdown-container ${isFilterOpen ? 'active' : ''}`}
+            className={`driver-filter-dropdown-container ${isFilterOpen ? "active" : ""}`}
           >
             <button
               id="driver-filter-toggle-btn"
@@ -222,20 +254,31 @@ export default function LapChart() {
                 <i className="fa-solid fa-users"></i>
                 <span>Drivers ({filterLabel})</span>
               </span>
-              <i className="fa-solid fa-chevron-down" style={{ fontSize: '10px', marginLeft: '4px' }}></i>
+              <i
+                className="fa-solid fa-chevron-down"
+                style={{ fontSize: "10px", marginLeft: "4px" }}
+              ></i>
             </button>
             <div
-              className={`driver-filter-menu ${isFilterOpen ? 'active' : ''}`}
+              className={`driver-filter-menu ${isFilterOpen ? "active" : ""}`}
               id="driver-filter-menu"
-              style={{ display: isFilterOpen ? 'block' : 'none' }}
+              style={{ display: isFilterOpen ? "block" : "none" }}
             >
               <div className="filter-menu-header">
                 <span>Filter Drivers</span>
                 <div className="filter-actions">
-                  <button type="button" className="btn-text-action" onClick={() => setAllDrivers(true)}>
+                  <button
+                    type="button"
+                    className="btn-text-action"
+                    onClick={() => setAllDrivers(true)}
+                  >
                     All
                   </button>
-                  <button type="button" className="btn-text-action" onClick={() => setAllDrivers(false)}>
+                  <button
+                    type="button"
+                    className="btn-text-action"
+                    onClick={() => setAllDrivers(false)}
+                  >
                     Clear
                   </button>
                 </div>
@@ -267,13 +310,25 @@ export default function LapChart() {
         <div className="card-header flex-between">
           <h3 id="lapchart-title">
             <i className="fa-solid fa-chart-line"></i> Lap-by-Lap Progression (
-            {chartData ? `${season} Round ${selectedRound} • ${chartData.maxLap} Laps • ${chartData.driverNames.length} Drivers` : `P1 - P20`}
+            {chartData
+              ? `${season} Round ${selectedRound} • ${chartData.maxLap} Laps • ${chartData.driverNames.length} Drivers`
+              : `P1 - P20`}
             )
           </h3>
         </div>
         <div className="card-body">
           {isLoading ? (
-            <div className="text-center py-5 text-muted">
+            <div
+              className="text-center py-5 text-muted"
+              style={{
+                padding: "2rem 1rem",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "14px",
+              }}
+            >
               <i className="fa-solid fa-spinner fa-spin fa-2x"></i>
               <p className="mt-2">Loading Lap Chart...</p>
             </div>

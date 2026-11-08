@@ -146,7 +146,17 @@ export default function StandingsPage() {
         </div>
         <div className="card-body p-0">
           {isLoading ? (
-            <div className="text-center py-5 text-muted">
+            <div
+              className="text-center py-5 text-muted"
+              style={{
+                padding: "2rem 1rem",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "14px",
+              }}
+            >
               <i className="fa-solid fa-spinner fa-spin fa-2x"></i>
               <p className="mt-2">Loading standings for {season}...</p>
             </div>
