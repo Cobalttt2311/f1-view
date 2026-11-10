@@ -2,7 +2,7 @@
 ## Tifosi (f1-view) ➔ React 1:1 Pixel-Perfect & Data-Exact Migration
 
 > **Dokumen Audit & Spesifikasi Implementasi 100% Presisi**  
-> **Referensi Utama:** `legacy/index.legacy.html`, `legacy/js/app.js`, `legacy/js/api.js`, dan live site [https://cobalttt2311.github.io/f1-view/](https://cobalttt2311.github.io/f1-view/)  
+> **Referensi Utama:** `legacy/index.legacy.html`, `legacy/js/app.js`, `legacy/js/api.js`, dan live site [Tifosi - Telemetry & Information for Formula One Statistics & Insights](https://f1-view-nine.vercel.app/dashboard)  
 > **Tujuan:** Menyelaraskan seluruh tampilan visual (UI/CSS), daftar menu, interaktivitas, dan data API schema agar 100% identik dengan versi aslinya tanpa deviasi.
 
 ---
@@ -62,7 +62,7 @@ Inilah sebab utama mengapa di tabel klasemen tidak muncul poin, nama tim kosong,
 
 ## 2. Blueprint Komprehensif Arsitektur React 1:1
 
-Untuk menjamin 100% kesesuaian dengan `https://cobalttt2311.github.io/f1-view/`, kita petakan seluruh file komponen:
+Untuk menjamin 100% kesesuaian dengan [Tifosi - Telemetry & Information for Formula One Statistics & Insights](https://f1-view-nine.vercel.app/dashboard), kita petakan seluruh file komponen:
 
 ```
 src/
