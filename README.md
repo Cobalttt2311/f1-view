@@ -1,4 +1,4 @@
-# 🏎️ Tifosi - Formula 1 Analytics & Telemetry Web Dashboard
+# Tifosi - Telemetry & Information for Formula One Statistics & Insights
 
 <p align="center">
   <img src="public/assets/logo.png" alt="Tifosi F1 Logo" width="150" style="max-width: 100%; height: auto;"/>
