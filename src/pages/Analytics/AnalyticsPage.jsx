@@ -260,11 +260,11 @@ export default function AnalyticsPage() {
                 },
                 {
                   value: "teammate-quali",
-                  label: "Teammate Qualifying Battles (Head-to-Head)",
+                  label: "Teammate Qualifying Battles",
                 },
                 {
                   value: "driver-form",
-                  label: "Driver Rolling Form (Last 5 Races Moving Avg)",
+                  label: "Driver Rolling Form",
                 },
                 {
                   value: "points-progression",
@@ -286,8 +286,7 @@ export default function AnalyticsPage() {
               options={[
                 {
                   value: "pole-to-win",
-                  label:
-                    "Pole-to-Win Conversion Rate (% of Pole Sitters Winning)",
+                  label: "Pole-to-Win Conversion Rate",
                 },
                 {
                   value: "dnf-circuits",
@@ -295,11 +294,11 @@ export default function AnalyticsPage() {
                 },
                 {
                   value: "deep-grid-wins",
-                  label: "Miracle Wins from Deepest Grid (P10+)",
+                  label: "Miracle Wins from Deepest Grid",
                 },
                 {
                   value: "most-laps-led",
-                  label: "All-Time Laps Led (P1 Race Leaders)",
+                  label: "All-Time Laps Led",
                 },
                 {
                   value: "fastest-speeds",
@@ -307,7 +306,7 @@ export default function AnalyticsPage() {
                 },
                 {
                   value: "all-time-winners",
-                  label: "All-Time Grand Prix Winners (Hall of Fame)",
+                  label: "All-Time Grand Prix Winners",
                 },
                 {
                   value: "constructor-one-twos",
@@ -319,7 +318,7 @@ export default function AnalyticsPage() {
                 },
                 {
                   value: "circuit-masters",
-                  label: "King of the Circuit (Mastery per Track)",
+                  label: "King of the Circuit",
                 },
               ]}
             />

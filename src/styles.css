@@ -63,6 +63,7 @@ body.f1-dark {
   font-size: 14px;
   line-height: 1.5;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -563,7 +564,8 @@ a {
 .f1-app-container {
   display: flex;
   height: calc(100vh - 62px);
-  width: 100vw;
+  height: calc(100dvh - 62px);
+  width: 100%;
   overflow: hidden;
 }
 
@@ -848,7 +850,9 @@ a {
 /* Main Content Area */
 .f1-main-content {
   flex: 1;
+  min-width: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 24px 30px 48px;
   background: var(--f1-black);
 }
@@ -3544,6 +3548,29 @@ a {
 }
 
 @media (max-width: 768px) {
+  html,
+  body,
+  body.f1-dark {
+    height: auto;
+    min-height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .f1-header {
+    position: sticky;
+    top: 0;
+    padding: 0 14px;
+    gap: 10px;
+  }
+
+  .f1-app-container {
+    height: auto;
+    min-height: calc(100dvh - 62px);
+    width: 100%;
+    overflow: visible;
+  }
+
   .mobile-menu-btn {
     display: inline-flex;
   }
@@ -3555,11 +3582,6 @@ a {
     display: none;
   }
 
-  .f1-header {
-    padding: 0 14px;
-    gap: 10px;
-  }
-
   .header-controls {
     gap: 6px;
   }
@@ -3569,6 +3591,7 @@ a {
     top: 0;
     left: 0;
     height: 100vh;
+    height: 100dvh;
     transform: translateX(-100%);
     transition: transform 0.25s ease;
     z-index: 1600;
@@ -3595,7 +3618,9 @@ a {
   }
 
   .f1-main-content {
-    padding: 16px 14px 36px;
+    overflow: visible;
+    width: 100%;
+    padding: 16px 14px 48px;
   }
 
   /* Page Headers & Controls */
