@@ -269,20 +269,24 @@ export default function DashboardPage() {
             </h2>
 
             <div className="hero-circuit-meta">
-              <CountryFlag
-                name={targetRace.country || targetRace.location}
-                size={20}
-              />
-              <span id="dash-next-circuit" className="hero-circuit-name">
-                {targetRace.circuit_name}
+              <span className="hero-meta-pair">
+                <CountryFlag
+                  name={targetRace.country || targetRace.location}
+                  size={20}
+                />
+                <span id="dash-next-circuit" className="hero-circuit-name">
+                  {targetRace.circuit_name}
+                </span>
               </span>
-              <span className="hero-meta-sep hero-location-icon">
-                <i className="fa-solid fa-location-dot"></i>
-              </span>
-              <span id="dash-next-location" className="hero-location-text">
-                {[targetRace.location, targetRace.country]
-                  .filter(Boolean)
-                  .join(", ")}
+              <span className="hero-meta-pair">
+                <span className="hero-meta-sep hero-location-icon">
+                  <i className="fa-solid fa-location-dot"></i>
+                </span>
+                <span id="dash-next-location" className="hero-location-text">
+                  {[targetRace.location, targetRace.country]
+                    .filter(Boolean)
+                    .join(", ")}
+                </span>
               </span>
             </div>
 

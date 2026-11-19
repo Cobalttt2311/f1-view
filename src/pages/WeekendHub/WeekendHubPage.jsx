@@ -202,18 +202,20 @@ export default function WeekendHubPage() {
           )}
 
           <div className="hero-circuit-meta">
-            <CountryFlag
-              name={selectedRace.country || selectedRace.location}
-              size={18}
-            />
-            <span className="hero-circuit-name">
-              <WikiLink
-                text={selectedRace.circuit_name}
-                url={selectedRace.circuit_wiki_url}
+            <span className="hero-meta-pair">
+              <CountryFlag
+                name={selectedRace.country || selectedRace.location}
+                size={18}
               />
+              <span className="hero-circuit-name">
+                <WikiLink
+                  text={selectedRace.circuit_name}
+                  url={selectedRace.circuit_wiki_url}
+                />
+              </span>
             </span>
             {selectedRace.location && (
-              <>
+              <span className="hero-meta-pair">
                 <span className="hero-meta-sep hero-location-icon">
                   <i className="fa-solid fa-location-dot"></i>
                 </span>
@@ -222,7 +224,7 @@ export default function WeekendHubPage() {
                     .filter(Boolean)
                     .join(", ")}
                 </span>
-              </>
+              </span>
             )}
           </div>
         </div>

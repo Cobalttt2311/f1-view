@@ -1808,6 +1808,12 @@ a {
   color: var(--f1-text-muted);
 }
 
+.hero-meta-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
 .hero-location-icon {
   margin: 0 3px 0 10px;
   font-size: 12px;
