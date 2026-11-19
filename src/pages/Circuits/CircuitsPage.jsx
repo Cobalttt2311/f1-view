@@ -6,6 +6,10 @@ import Modal from "../../components/common/Modal";
 import Pagination from "../../components/common/Pagination";
 import DriverBadge from "../../components/common/DriverBadge";
 import TeamBadge from "../../components/common/TeamBadge";
+import {
+  CardGridSkeleton,
+  TablePanelSkeleton,
+} from "../../components/common/Skeleton";
 import { CountryFlag } from "../../utils/flags";
 import { getCircuitTrackMap, getHeroImage } from "../../utils/f1Assets";
 
@@ -179,10 +183,11 @@ export default function CircuitsPage() {
 
       {/* CIRCUITS VISUAL CARD GRID + PAGINATION */}
       {isLoading ? (
-        <div className="f1-loading-state">
-          <i className="fa-solid fa-spinner fa-spin fa-2x"></i>
-          <p>Loading circuits directory...</p>
-        </div>
+        <CardGridSkeleton
+          count={9}
+          gridClass="f1-circuits-featured-grid mb-4"
+          cardHeight={240}
+        />
       ) : paginated.length > 0 ? (
         <>
           <div className="f1-circuits-featured-grid mb-4">
@@ -213,10 +218,7 @@ export default function CircuitsPage() {
         title={`Past Grand Prix Winners — ${selectedCircuit?.name || "Circuit"}`}
       >
         {loadingHistory ? (
-          <div className="f1-loading-state">
-            <i className="fa-solid fa-spinner fa-spin fa-2x"></i>
-            <p>Loading past winners...</p>
-          </div>
+          <TablePanelSkeleton rows={6} cols={5} />
         ) : safeWinnersHistory.length > 0 ? (
           <div className="table-responsive" style={{ maxHeight: "480px" }}>
             <table className="f1-minimal-table">

@@ -14,6 +14,7 @@ import {
 import { Line } from "react-chartjs-2";
 import { useSeason } from "../../context/SeasonContext";
 import { F1Api, toArray } from "../../api/client";
+import { ChartSkeleton } from "../../components/common/Skeleton";
 import { getTeamLogo } from "../../utils/f1Assets";
 import {
   getDriverCode,
@@ -392,10 +393,7 @@ export default function LapChart() {
 
         <div className="p-3">
           {isLoading ? (
-            <div className="f1-loading-state">
-              <i className="fa-solid fa-spinner fa-spin fa-2x"></i>
-              <p>Loading lap-by-lap telemetry...</p>
-            </div>
+            <ChartSkeleton />
           ) : chartData && chartData.datasets.length > 0 ? (
             <div className="f1-telemetry-chart-block">
               <div className="f1-chart-legend-grid">

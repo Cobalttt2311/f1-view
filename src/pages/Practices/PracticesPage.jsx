@@ -6,6 +6,7 @@ import { useTimezone } from "../../context/TimezoneContext";
 import { F1Api, toArray, toObject } from "../../api/client";
 import WikiLink from "../../components/common/WikiLink";
 import F1Select from "../../components/common/F1Select";
+import { CardGridSkeleton } from "../../components/common/Skeleton";
 import { CountryFlag } from "../../utils/flags";
 import { getCircuitTrackMap, getHeroImage } from "../../utils/f1Assets";
 
@@ -80,10 +81,11 @@ export default function PracticesPage() {
       </div>
 
       {loadingPractice || loadingRaces ? (
-        <div className="f1-loading-state">
-          <i className="fa-solid fa-spinner fa-spin fa-2x"></i>
-          <p>Loading practice timetable...</p>
-        </div>
+        <CardGridSkeleton
+          count={2}
+          gridClass="f1-practice-split-grid"
+          cardHeight={280}
+        />
       ) : practiceData ? (
         <div className="f1-practice-split-grid" id="practice-content-card">
           {/* Left: Venue & Track Outline Card */}

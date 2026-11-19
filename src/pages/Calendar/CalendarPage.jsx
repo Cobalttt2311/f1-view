@@ -5,6 +5,7 @@ import { useSeason } from "../../context/SeasonContext";
 import { useTimezone } from "../../context/TimezoneContext";
 import { F1Api, toArray } from "../../api/client";
 import WikiLink from "../../components/common/WikiLink";
+import { CalendarSplitSkeleton } from "../../components/common/Skeleton";
 import { CountryFlag } from "../../utils/flags";
 import { getCircuitTrackMap, getHeroImage } from "../../utils/f1Assets";
 
@@ -279,10 +280,7 @@ export default function CalendarPage() {
   return (
     <section id="view-calendar" className="content-view active">
       {isLoading ? (
-        <div className="f1-loading-state">
-          <i className="fa-solid fa-spinner fa-spin fa-2x"></i>
-          <p>Loading {season} Grand Prix Calendar...</p>
-        </div>
+        <CalendarSplitSkeleton />
       ) : races.length > 0 ? (
         <div className="f1-calendar-split-layout" id="calendar-container">
           {/* LEFT PANEL: SCROLLABLE GP LIST (Reference 5 Left Rail) */}

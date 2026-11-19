@@ -3902,6 +3902,56 @@ a {
   color: var(--f1-red);
 }
 
+/* Shimmer Skeleton System */
+@keyframes f1Shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.f1-skeleton-box {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.035) 25%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(255, 255, 255, 0.035) 75%
+  );
+  background-size: 200% 100%;
+  animation: f1Shimmer 1.4s ease-in-out infinite;
+}
+
+.f1-skeleton-card {
+  background: var(--f1-surface-900);
+  border: 1px solid var(--f1-border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.f1-skeleton-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.f1-skeleton-tr td {
+  padding-top: 13px;
+  padding-bottom: 13px;
+}
+
+.f1-skeleton-chart-wrap {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 /* Utility Helpers */
 .w-100 {
   width: 100%;

@@ -5,6 +5,7 @@ import { useSeason } from "../../context/SeasonContext";
 import { useTimezone } from "../../context/TimezoneContext";
 import { F1Api, toArray } from "../../api/client";
 import WikiLink from "../../components/common/WikiLink";
+import { CardGridSkeleton } from "../../components/common/Skeleton";
 import { CountryFlag } from "../../utils/flags";
 import { getCircuitTrackMap } from "../../utils/f1Assets";
 
@@ -37,10 +38,11 @@ export default function SprintsPage() {
       </div>
 
       {isLoading ? (
-        <div className="f1-loading-state">
-          <i className="fa-solid fa-spinner fa-spin fa-2x"></i>
-          <p>Loading sprint weekends for {season}...</p>
-        </div>
+        <CardGridSkeleton
+          count={4}
+          gridClass="f1-sprints-cards-grid mb-4"
+          cardHeight={190}
+        />
       ) : sprints.length > 0 ? (
         <>
           {/* SPRINT WEEKEND FEATURE CARDS */}

@@ -6,6 +6,7 @@ import { F1Api, toArray } from "../../api/client";
 import WikiLink from "../../components/common/WikiLink";
 import DriverBadge from "../../components/common/DriverBadge";
 import TeamBadge from "../../components/common/TeamBadge";
+import { TablePanelSkeleton } from "../../components/common/Skeleton";
 import { CountryFlag } from "../../utils/flags";
 import { useTableSort } from "../../utils/useTableSort";
 import F1Select from "../../components/common/F1Select";
@@ -298,10 +299,7 @@ export default function WeekendHubPage() {
       {/* TELEMETRY DATA TABLE (Reference 1 Minimalist Aesthetic) */}
       <div className="f1-minimal-panel">
         {isLoading ? (
-          <div className="f1-loading-state">
-            <i className="fa-solid fa-spinner fa-spin fa-2x"></i>
-            <p>Loading session classification...</p>
-          </div>
+          <TablePanelSkeleton rows={10} cols={6} />
         ) : (
           <div className="table-responsive">
             {/* 1. RACE RESULTS */}

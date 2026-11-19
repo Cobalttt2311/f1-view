@@ -6,6 +6,10 @@ import WikiLink from "../../components/common/WikiLink";
 import Pagination from "../../components/common/Pagination";
 import DriverBadge from "../../components/common/DriverBadge";
 import TeamBadge from "../../components/common/TeamBadge";
+import {
+  CardGridSkeleton,
+  TableRowsSkeleton,
+} from "../../components/common/Skeleton";
 import { CountryFlag } from "../../utils/flags";
 import { useTableSort } from "../../utils/useTableSort";
 import {
@@ -211,10 +215,11 @@ export default function ConstructorsPage({ mode = "grid" }) {
       {!isArchiveMode && (
         <div className="mb-4">
           {loadingSeasonTeams ? (
-            <div className="f1-loading-state">
-              <i className="fa-solid fa-spinner fa-spin fa-2x"></i>
-              <p>Loading {season} constructors...</p>
-            </div>
+            <CardGridSkeleton
+              count={6}
+              gridClass="f1-constructors-editorial-grid"
+              cardHeight={210}
+            />
           ) : filteredSeasonTeams.length > 0 ? (
             <div className="f1-constructors-editorial-grid">
               {filteredSeasonTeams.map((team, idx) => {
@@ -287,11 +292,7 @@ export default function ConstructorsPage({ mode = "grid" }) {
               </thead>
               <tbody>
                 {isLoading ? (
-                  <tr>
-                    <td colSpan="3" className="table-state-cell">
-                      Loading constructors...
-                    </td>
-                  </tr>
+                  <TableRowsSkeleton rows={10} cols={3} />
                 ) : paginated.length > 0 ? (
                   paginated.map((c, idx) => (
                     <tr key={c.constructorId || c.constructor_name || idx}>

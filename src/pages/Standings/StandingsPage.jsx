@@ -6,6 +6,10 @@ import { F1Api, toArray } from "../../api/client";
 import WikiLink from "../../components/common/WikiLink";
 import DriverBadge from "../../components/common/DriverBadge";
 import TeamBadge from "../../components/common/TeamBadge";
+import {
+  CardGridSkeleton,
+  TablePanelSkeleton,
+} from "../../components/common/Skeleton";
 import { CountryFlag, getCountryThreeLetterCode } from "../../utils/flags";
 import { useTableSort } from "../../utils/useTableSort";
 import {
@@ -229,10 +233,16 @@ export default function StandingsPage() {
       </div>
 
       {isLoading ? (
-        <div className="f1-loading-state">
-          <i className="fa-solid fa-spinner fa-spin fa-2x"></i>
-          <p>Loading {season} standings...</p>
-        </div>
+        <>
+          <CardGridSkeleton
+            count={3}
+            gridClass="standings-podium-grid"
+            cardHeight={164}
+          />
+          <div className="f1-minimal-panel">
+            <TablePanelSkeleton rows={8} cols={5} />
+          </div>
+        </>
       ) : (
         <>
           {/* TOP 3 PODIUM FEATURE CARDS */}

@@ -10,6 +10,11 @@ import DriverBadge from "../../components/common/DriverBadge";
 import TeamBadge from "../../components/common/TeamBadge";
 import { useTableSort } from "../../utils/useTableSort";
 import F1Select from "../../components/common/F1Select";
+import {
+  CardGridSkeleton,
+  ChartSkeleton,
+  TablePanelSkeleton,
+} from "../../components/common/Skeleton";
 import { getTeamColor } from "../../utils/teamColors";
 
 const METRIC_DESCRIPTIONS = {
@@ -382,10 +387,22 @@ export default function AnalyticsPage() {
 
         <div>
           {isLoading ? (
-            <div className="f1-loading-state">
-              <i className="fa-solid fa-spinner fa-spin fa-2x"></i>
-              <p>Calculating telemetry metrics...</p>
-            </div>
+            category === "seasonal" &&
+            (seasonalMetric === "driver-form" ||
+              seasonalMetric === "points-progression") ? (
+              <ChartSkeleton />
+            ) : category === "seasonal" &&
+              seasonalMetric === "teammate-quali" ? (
+              <div className="p-3">
+                <CardGridSkeleton
+                  count={6}
+                  gridClass="h2h-battles-grid"
+                  cardHeight={120}
+                />
+              </div>
+            ) : (
+              <TablePanelSkeleton rows={8} cols={5} />
+            )
           ) : category === "seasonal" && seasonalMetric === "driver-form" ? (
             <div className="p-3">
               <DriverFormChart rawData={currentData} />

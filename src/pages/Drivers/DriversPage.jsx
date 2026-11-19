@@ -5,6 +5,11 @@ import { F1Api, toArray, toObject } from "../../api/client";
 import WikiLink from "../../components/common/WikiLink";
 import AnimatedNumber from "../../components/common/AnimatedNumber";
 import Modal from "../../components/common/Modal";
+import {
+  CardGridSkeleton,
+  ProfileModalSkeleton,
+  TableRowsSkeleton,
+} from "../../components/common/Skeleton";
 import Pagination from "../../components/common/Pagination";
 import DriverBadge from "../../components/common/DriverBadge";
 import { CountryFlag } from "../../utils/flags";
@@ -329,10 +334,11 @@ export default function DriversPage({ mode = "grid" }) {
       {!isArchiveMode && (
         <div className="mb-4">
           {loadingSeasonDrivers ? (
-            <div className="f1-loading-state">
-              <i className="fa-solid fa-spinner fa-spin fa-2x"></i>
-              <p>Loading {season} driver lineup...</p>
-            </div>
+            <CardGridSkeleton
+              count={8}
+              gridClass="f1-drivers-editorial-grid"
+              cardHeight={164}
+            />
           ) : filteredSeasonGrid.length > 0 ? (
             <div className="f1-drivers-editorial-grid">
               {filteredSeasonGrid.map((d, i) => (
@@ -400,11 +406,7 @@ export default function DriversPage({ mode = "grid" }) {
               </thead>
               <tbody>
                 {isLoading ? (
-                  <tr>
-                    <td colSpan="4" className="table-state-cell">
-                      Loading drivers archive...
-                    </td>
-                  </tr>
+                  <TableRowsSkeleton rows={10} cols={4} />
                 ) : paginated.length > 0 ? (
                   paginated.map((d, idx) => (
                     <tr
@@ -469,10 +471,7 @@ export default function DriversPage({ mode = "grid" }) {
         title="Driver Career Profile"
       >
         {loadingProfile ? (
-          <div className="f1-loading-state">
-            <i className="fa-solid fa-spinner fa-spin fa-2x"></i>
-            <p>Loading career statistics...</p>
-          </div>
+          <ProfileModalSkeleton />
         ) : activeProfile ? (
           <div className="driver-profile-modal-content">
             <div className="profile-modal-hero">

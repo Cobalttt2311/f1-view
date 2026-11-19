@@ -8,6 +8,7 @@ import DriverBadge from "../../components/common/DriverBadge";
 import TeamBadge from "../../components/common/TeamBadge";
 import WikiLink from "../../components/common/WikiLink";
 import AnimatedNumber from "../../components/common/AnimatedNumber";
+import { TableRowsSkeleton } from "../../components/common/Skeleton";
 import { CountryFlag } from "../../utils/flags";
 import {
   DEFAULT_CAR_SILHOUETTE,
@@ -573,11 +574,7 @@ export default function DashboardPage() {
               </thead>
               <tbody>
                 {loadingRaces ? (
-                  <tr>
-                    <td colSpan="4" className="table-state-cell">
-                      Loading season calendar...
-                    </td>
-                  </tr>
+                  <TableRowsSkeleton rows={7} cols={4} />
                 ) : races.length > 0 ? (
                   races.map((r) => {
                     const isTarget =
@@ -667,11 +664,7 @@ export default function DashboardPage() {
               </thead>
               <tbody>
                 {loadingDrivers ? (
-                  <tr>
-                    <td colSpan="5" className="table-state-cell">
-                      Loading standings...
-                    </td>
-                  </tr>
+                  <TableRowsSkeleton rows={5} cols={5} />
                 ) : drivers.length > 0 ? (
                   drivers.slice(0, 5).map((d, i) => {
                     const rank = d.championship_rank || i + 1;
