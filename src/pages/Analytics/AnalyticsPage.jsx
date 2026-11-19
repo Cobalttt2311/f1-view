@@ -12,6 +12,37 @@ import { useTableSort } from "../../utils/useTableSort";
 import F1Select from "../../components/common/F1Select";
 import { getTeamColor } from "../../utils/teamColors";
 
+const METRIC_DESCRIPTIONS = {
+  "biggest-movers":
+    "Drivers who gained the most positions from their starting grid slot to the checkered flag.",
+  "pit-stops-eff":
+    "Average pit stop duration and efficiency per constructor across the selected season.",
+  "teammate-quali":
+    "Head-to-head qualifying battle comparing teammates driving the same car.",
+  "driver-form":
+    "Rolling form tracking points scored across each driver's recent Grands Prix.",
+  "points-progression":
+    "Cumulative championship points trajectory round-by-round throughout the season.",
+  "pole-to-win":
+    "Percentage of pole-position qualifiers who converted P1 on the grid into a Grand Prix victory.",
+  "dnf-circuits":
+    "Circuits with the highest historical retirement (Did Not Finish) rates.",
+  "deep-grid-wins":
+    "Rare Grand Prix victories achieved after starting from P10 or further back on the grid.",
+  "most-laps-led":
+    "All-time drivers who have led the most race laps in P1 across Formula 1 history.",
+  "fastest-speeds":
+    "Highest recorded race speed-trap velocities in Formula 1 history.",
+  "all-time-winners":
+    "Drivers with the most Grand Prix victories in Formula 1 history.",
+  "constructor-one-twos":
+    "Constructors that achieved the most 1st and 2nd place finishes in the same race.",
+  "youngest-winners":
+    "The youngest drivers ever to win a Formula 1 World Championship Grand Prix.",
+  "circuit-masters":
+    "Drivers with the most victories at a single specific circuit.",
+};
+
 export default function AnalyticsPage() {
   const { season } = useSeason();
   const [category, setCategory] = useState("seasonal");
@@ -333,11 +364,20 @@ export default function AnalyticsPage() {
       {/* ANALYTICS CONTENT PANEL */}
       <div className="f1-minimal-panel">
         <div className="panel-header-bar">
-          <h3 className="panel-title" id="analytics-card-title">
-            {category === "seasonal"
-              ? seasonalMetric.replace(/-/g, " ").toUpperCase()
-              : historicalMetric.replace(/-/g, " ").toUpperCase()}
-          </h3>
+          <div className="panel-title-group">
+            <h3 className="panel-title" id="analytics-card-title">
+              {category === "seasonal"
+                ? seasonalMetric.replace(/-/g, " ").toUpperCase()
+                : historicalMetric.replace(/-/g, " ").toUpperCase()}
+            </h3>
+            <p className="panel-subtitle-desc" id="analytics-card-desc">
+              {
+                METRIC_DESCRIPTIONS[
+                  category === "seasonal" ? seasonalMetric : historicalMetric
+                ]
+              }
+            </p>
+          </div>
         </div>
 
         <div>

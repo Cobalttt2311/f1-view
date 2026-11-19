@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Header from "./components/layout/Header";
-import Sidebar from "./components/layout/Sidebar";
 
 // 11 Core Pages
 import DashboardPage from "./pages/Dashboard/DashboardPage";
@@ -55,30 +54,12 @@ class ViewErrorBoundary extends React.Component {
 }
 
 export default function App() {
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
-
-  useEffect(() => {
-    if (isCollapsed) {
-      document.body.classList.add("sidebar-collapsed");
-    } else {
-      document.body.classList.remove("sidebar-collapsed");
-    }
-  }, [isCollapsed]);
 
   return (
     <>
-      <Header
-        onToggleMobileSidebar={() => setIsMobileOpen((prev) => !prev)}
-      />
+      <Header />
       <div className="f1-app-container">
-        <Sidebar
-          isMobileOpen={isMobileOpen}
-          onCloseMobile={() => setIsMobileOpen(false)}
-          isCollapsed={isCollapsed}
-          onToggleCollapse={() => setIsCollapsed((prev) => !prev)}
-        />
         <main className="f1-main-content">
           <ViewErrorBoundary resetKey={location.pathname}>
             <Routes>
@@ -90,8 +71,19 @@ export default function App() {
               <Route path="/standings" element={<StandingsPage />} />
               <Route path="/weekend-hub" element={<WeekendHubPage />} />
               <Route path="/lap-chart" element={<LapChart />} />
-              <Route path="/drivers" element={<DriversPage />} />
-              <Route path="/constructors" element={<ConstructorsPage />} />
+              <Route path="/drivers" element={<DriversPage mode="grid" />} />
+              <Route
+                path="/drivers-directory"
+                element={<DriversPage mode="archive" />}
+              />
+              <Route
+                path="/constructors"
+                element={<ConstructorsPage mode="grid" />}
+              />
+              <Route
+                path="/constructors-directory"
+                element={<ConstructorsPage mode="archive" />}
+              />
               <Route path="/circuits" element={<CircuitsPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />

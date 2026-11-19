@@ -130,8 +130,19 @@ export default function DashboardPage() {
 
   const dLeader = drivers[0];
   const cLeader = constructors[0];
-  const uniqueCircuits = new Set(races.map((r) => r.circuit_name));
   const todayStr = new Date().toISOString().split("T")[0];
+  const completedRaces = races.filter(
+    (r) => r.race_date && r.race_date < todayStr
+  ).length;
+  const remainingRaces = Math.max(0, races.length - completedRaces);
+  const p1LeadRaw =
+    drivers.length >= 2
+      ? Number(drivers[0]?.total_points ?? 0) -
+        Number(drivers[1]?.total_points ?? 0)
+      : 0;
+  const p1Lead = Number.isInteger(p1LeadRaw)
+    ? p1LeadRaw
+    : Number(p1LeadRaw.toFixed(1));
 
   // Resolve spotlight assets
   const heroBgUrl = targetRace
@@ -199,11 +210,12 @@ export default function DashboardPage() {
           />
 
           <div className="hero-spotlight-left">
-            <div className="hero-meta-tags">
-              <span className="f1-minimal-pill pill-accent" id="dash-next-live-badge">
+            <div className="hero-meta-editorial">
+              <span className="hero-meta-round" id="dash-next-live-badge">
                 ROUND {targetRace.round}
               </span>
-              <span className="f1-minimal-pill" id="dash-next-status-text">
+              <span className="hero-meta-slash" aria-hidden="true">/</span>
+              <span className="hero-meta-format" id="dash-next-status-text">
                 {isLiveNow
                   ? "LIVE RACE WEEKEND"
                   : isPastSeason
@@ -211,7 +223,10 @@ export default function DashboardPage() {
                     : "UPCOMING GRAND PRIX"}
               </span>
               {targetRace.has_sprint && (
-                <span className="f1-minimal-pill">SPRINT</span>
+                <>
+                  <span className="hero-meta-slash" aria-hidden="true">/</span>
+                  <span className="hero-meta-format is-sprint">SPRINT</span>
+                </>
               )}
             </div>
 
@@ -261,7 +276,7 @@ export default function DashboardPage() {
               <div className="hero-countdown-box">
                 <span className="countdown-overline">
                   <span className="countdown-live-dot" />
-                  NEXT SESSION COUNTDOWN
+                  Next Session Countdown
                 </span>
                 <div className="countdown-digits-row">
                   <div className="countdown-unit">
@@ -322,7 +337,7 @@ export default function DashboardPage() {
         >
           <div className="leader-card-content">
             <div className="leader-card-top">
-              <span className="leader-overline">DRIVERS STANDINGS</span>
+              <span className="leader-overline">Drivers Standings</span>
               <span className="leader-pos-tag">P1</span>
             </div>
 
@@ -380,12 +395,12 @@ export default function DashboardPage() {
             background: cLeaderTheme.gradient,
             borderColor: `${cLeaderTheme.baseColor}55`,
           }}
-          onClick={() => navigate("/standings")}
+          onClick={() => navigate("/standings?tab=constructors")}
         >
           <div className="leader-card-content w-100">
             <div className="leader-card-top flex-between">
               <div>
-                <span className="leader-overline">CONSTRUCTORS STANDINGS</span>
+                <span className="leader-overline">Constructors Standings</span>
                 <div className="leader-name-block" id="dash-team-leader">
                   <span className="leader-last-name">
                     {cLeader ? (
@@ -441,28 +456,42 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* KPI Summary Column */}
+        {/* KPI Summary 2x2 Grid */}
         <div className="dash-kpi-pair">
           <div className="minimal-kpi-box">
-            <span className="kpi-overline">CHAMPIONSHIP ROUNDS</span>
-            <div className="kpi-value-row">
-              <strong id="dash-total-races" className="kpi-number">
-                {races.length}
-              </strong>
-              <span id="dash-races-sub" className="kpi-sub">
-                {season} Calendar
-              </span>
-            </div>
+            <span className="kpi-overline">Rounds</span>
+            <strong id="dash-total-races" className="kpi-number">
+              {races.length}
+            </strong>
+            <span id="dash-races-sub" className="kpi-sub">
+              {season} Season
+            </span>
           </div>
 
           <div className="minimal-kpi-box">
-            <span className="kpi-overline">VENUES VISITED</span>
-            <div className="kpi-value-row">
-              <strong id="dash-total-circuits" className="kpi-number">
-                {uniqueCircuits.size}
-              </strong>
-              <span className="kpi-sub">International Circuits</span>
-            </div>
+            <span className="kpi-overline">Completed</span>
+            <strong id="dash-completed-races" className="kpi-number">
+              {completedRaces}
+            </strong>
+            <span className="kpi-sub">
+              {remainingRaces > 0 ? `${remainingRaces} Left` : "Finished"}
+            </span>
+          </div>
+
+          <div className="minimal-kpi-box">
+            <span className="kpi-overline">Teams</span>
+            <strong id="dash-active-teams" className="kpi-number">
+              {constructors.length}
+            </strong>
+            <span className="kpi-sub">Constructors</span>
+          </div>
+
+          <div className="minimal-kpi-box">
+            <span className="kpi-overline">P1 Lead</span>
+            <strong id="dash-p1-lead" className="kpi-number">
+              {p1Lead > 0 ? `+${p1Lead}` : p1Lead}
+            </strong>
+            <span className="kpi-sub">pts Gap</span>
           </div>
         </div>
       </div>
@@ -472,12 +501,7 @@ export default function DashboardPage() {
         {/* Left: Season Grand Prix Schedule (Clean without Format column) */}
         <div className="f1-minimal-panel" id="dash-schedule-card">
           <div className="panel-header-bar">
-            <div>
-              <h3 className="panel-title">Season Grand Prix Schedule</h3>
-              <p className="panel-subtitle">
-                Click any Grand Prix row to inspect session telemetry
-              </p>
-            </div>
+            <h3 className="panel-title">Season Grand Prix Schedule</h3>
             <button
               type="button"
               className="f1-link-btn"
@@ -495,14 +519,13 @@ export default function DashboardPage() {
                   <th>RND</th>
                   <th>GRAND PRIX</th>
                   <th>CIRCUIT</th>
-                  <th>DATE</th>
-                  <th className="text-right">TIME</th>
+                  <th className="text-right">DATE</th>
                 </tr>
               </thead>
               <tbody>
                 {loadingRaces ? (
                   <tr>
-                    <td colSpan="5" className="table-state-cell">
+                    <td colSpan="4" className="table-state-cell">
                       Loading season calendar...
                     </td>
                   </tr>
@@ -522,7 +545,7 @@ export default function DashboardPage() {
                       <tr
                         key={r.round}
                         className={rowClass}
-                        onClick={() => navigate("/weekend-hub")}
+                        onClick={() => navigate(`/weekend-hub?round=${r.round}`)}
                       >
                         <td className="cell-round">
                           {String(r.round).padStart(2, "0")}
@@ -550,16 +573,15 @@ export default function DashboardPage() {
                             url={r.circuit_wiki_url}
                           />
                         </td>
-                        <td className="cell-tabular">{r.race_date || "-"}</td>
                         <td className="cell-tabular text-right">
-                          {formatSessionTime(r.race_time_utc, r.race_time_wib)}
+                          {r.race_date || "-"}
                         </td>
                       </tr>
                     );
                   })
                 ) : (
                   <tr>
-                    <td colSpan="5" className="table-state-cell">
+                    <td colSpan="4" className="table-state-cell">
                       No races found for season {season}.
                     </td>
                   </tr>
@@ -572,12 +594,7 @@ export default function DashboardPage() {
         {/* Right: Top 5 Driver Championship (Reference 2 Minimalist Style) */}
         <div className="f1-minimal-panel">
           <div className="panel-header-bar">
-            <div>
-              <h3 className="panel-title">Top 5 Driver Standings</h3>
-              <p className="panel-subtitle">
-                World Drivers Championship leaderboard ({season})
-              </p>
-            </div>
+            <h3 className="panel-title">Top 5 Driver Standings</h3>
             <button
               type="button"
               className="f1-link-btn"

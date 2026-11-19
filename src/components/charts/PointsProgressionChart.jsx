@@ -13,6 +13,7 @@ import {
 import { Line } from "react-chartjs-2";
 import { useSeason } from "../../context/SeasonContext";
 import { F1Api, toArray } from "../../api/client";
+import { getTeamLogo } from "../../utils/f1Assets";
 import {
   getDriverCode,
   getDriverColor,
@@ -383,13 +384,15 @@ export default function PointsProgressionChart({ rawData }) {
               />
               <span className="legend-chip-code">{d.code}</span>
               <span className="legend-chip-name">{d.lastName}</span>
-              {d.teamShort && (
-                <span
-                  className="legend-chip-team"
-                  style={{ color: d.color }}
-                >
-                  {d.teamShort}
-                </span>
+              {d.team && getTeamLogo(d.team) && (
+                <img
+                  src={getTeamLogo(d.team)}
+                  alt={d.team}
+                  className="legend-chip-team-logo"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
               )}
             </button>
           );

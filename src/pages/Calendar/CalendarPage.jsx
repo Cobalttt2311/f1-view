@@ -318,23 +318,21 @@ export default function CalendarPage() {
                     </div>
 
                     <div className="cal-round-status-col">
-                      <div className="cal-pill-stack">
-                        <span
-                          className={`f1-status-pill ${
-                            isNext
-                              ? "status-next"
-                              : isCompleted
-                                ? "status-completed"
-                                : "status-upcoming"
-                          }`}
-                        >
-                          {isNext
-                            ? "Next"
+                      <span
+                        className={`cal-round-status-text ${
+                          isNext
+                            ? "is-next"
                             : isCompleted
-                              ? "Completed"
-                              : "Scheduled"}
-                        </span>
-                      </div>
+                              ? "is-completed"
+                              : "is-upcoming"
+                        }`}
+                      >
+                        {isNext
+                          ? "Next"
+                          : isCompleted
+                            ? "Completed"
+                            : "Scheduled"}
+                      </span>
                       <span className="cal-round-date-str">
                         {formatWeekendRange(r)}
                       </span>

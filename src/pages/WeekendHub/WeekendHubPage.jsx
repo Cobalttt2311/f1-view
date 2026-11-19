@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { useSeason } from "../../context/SeasonContext";
 import { F1Api, toArray } from "../../api/client";
 import WikiLink from "../../components/common/WikiLink";
@@ -9,10 +10,21 @@ import { CountryFlag } from "../../utils/flags";
 import { useTableSort } from "../../utils/useTableSort";
 import F1Select from "../../components/common/F1Select";
 import { getCircuitTrackMap, getHeroImage } from "../../utils/f1Assets";
+import { formatWeekendRange } from "../../utils/helper";
 
 export default function WeekendHubPage() {
   const { season } = useSeason();
-  const [selectedRound, setSelectedRound] = useState(1);
+  const [searchParams] = useSearchParams();
+  const roundParam = Number(searchParams.get("round"));
+  const [selectedRound, setSelectedRound] = useState(
+    roundParam > 0 ? roundParam : 1
+  );
+
+  useEffect(() => {
+    if (roundParam > 0) {
+      setSelectedRound(roundParam);
+    }
+  }, [roundParam]);
   const [activeTab, setActiveTab] = useState("race-results");
   const [svgFailed, setSvgFailed] = useState(false);
   const [heroFailed, setHeroFailed] = useState(false);
@@ -170,16 +182,10 @@ export default function WeekendHubPage() {
         )}
 
         <div className="weekend-banner-left">
-          <div className="hero-meta-tags">
-            <span className="f1-minimal-pill pill-accent">
+          <div className="hero-meta-editorial">
+            <span className="hero-meta-round">
               ROUND {String(currentRound).padStart(2, "0")}
             </span>
-            <span className="f1-minimal-pill" id="weekend-format-badge">
-              {selectedRace.has_sprint ? "SPRINT WEEKEND" : "STANDARD FORMAT"}
-            </span>
-            {selectedRace.race_date && (
-              <span className="f1-minimal-pill">{selectedRace.race_date}</span>
-            )}
           </div>
 
           <h2 className="weekend-banner-title" id="weekend-round-title">
@@ -188,6 +194,12 @@ export default function WeekendHubPage() {
               url={selectedRace.race_wiki_url}
             />
           </h2>
+
+          {(selectedRace.race_date || selectedRace.fp1_date) && (
+            <div className="hero-meta-date-row">
+              {formatWeekendRange(selectedRace).toUpperCase()}
+            </div>
+          )}
 
           <div className="hero-circuit-meta">
             <CountryFlag

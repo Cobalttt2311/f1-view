@@ -96,15 +96,32 @@ function EditorialDriverCard({ driver, season, numberLookup, onSelect }) {
   );
 }
 
-export default function DriversPage() {
+function formatOrdinal(n) {
+  const num = Number(n);
+  if (!num || isNaN(num)) return "-";
+  const v = num % 100;
+  const suffix =
+    v >= 11 && v <= 13
+      ? "th"
+      : num % 10 === 1
+        ? "st"
+        : num % 10 === 2
+          ? "nd"
+          : num % 10 === 3
+            ? "rd"
+            : "th";
+  return `${num}${suffix}`;
+}
+
+export default function DriversPage({ mode = "grid" }) {
   const { season } = useSeason();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'archive'
   const itemsPerPage = 15;
 
   const [selectedDriverId, setSelectedDriverId] = useState(null);
   const [selectedDriverFallback, setSelectedDriverFallback] = useState(null);
+  const [isSeasonContext, setIsSeasonContext] = useState(false);
 
   // Fetch Complete Historical Drivers Archive
   const { data: drivers = [], isLoading } = useQuery({
@@ -152,11 +169,18 @@ export default function DriversPage() {
 
   // Fetch Driver Profile for Modal
   const { data: fetchedProfile, isLoading: loadingProfile } = useQuery({
-    queryKey: ["driverProfile", selectedDriverId],
+    queryKey: [
+      "driverProfile",
+      selectedDriverId,
+      isSeasonContext ? season : "all-time",
+    ],
     queryFn: async () => {
       if (!selectedDriverId || String(selectedDriverId).startsWith("fallback:"))
         return null;
-      const res = await F1Api.getDriverProfile(selectedDriverId);
+      const res = await F1Api.getDriverProfile(
+        selectedDriverId,
+        isSeasonContext ? season : null
+      );
       return toObject(res);
     },
     enabled:
@@ -228,8 +252,9 @@ export default function DriversPage() {
     return sortedDrivers.slice(start, start + itemsPerPage);
   }, [sortedDrivers, safePage]);
 
-  const handleOpenDriverProfile = (d) => {
+  const handleOpenDriverProfile = (d, fromSeasonGrid = false) => {
     if (!d) return;
+    setIsSeasonContext(Boolean(fromSeasonGrid));
     setSelectedDriverFallback(d);
     const directId = d.driverId || d.driver_id || d.id;
     if (directId) {
@@ -254,30 +279,33 @@ export default function DriversPage() {
   const handleCloseModal = () => {
     setSelectedDriverId(null);
     setSelectedDriverFallback(null);
+    setIsSeasonContext(false);
   };
 
   const profileHeadshot = activeProfile
-    ? getDriverHeadshot(activeProfile.full_name, activeProfile.driver_code)
+    ? getDriverHeadshot(
+      activeProfile.full_name,
+      activeProfile.driver_code,
+      isSeasonContext ? season : null
+    )
     : null;
   const profileNumber =
     formatDriverNumber(activeProfile?.permanent_number) ||
     getVerifiedDriverNumber(activeProfile?.full_name);
 
-  // Show archive table automatically if season grid is empty or archive mode is active
-  const showArchiveTable =
-    viewMode === "archive" ||
-    search.trim().length > 0 ||
-    (!loadingSeasonDrivers && safeSeasonDrivers.length === 0);
+  const isArchiveMode = mode === "archive";
 
   return (
     <section id="view-drivers-db" className="content-view active">
       <div className="f1-page-header">
         <div>
           <span className="page-overline">
-            OFFICIAL F1 DRIVER LINEUP & ARCHIVE
+            {isArchiveMode
+              ? "ALL-TIME FORMULA 1 DRIVER ARCHIVE"
+              : `${season} OFFICIAL F1 DRIVER LINEUP`}
           </span>
           <h2 className="page-main-title">
-            Drivers Directory & Career Records
+            {isArchiveMode ? "Drivers Directory" : `${season} Drivers`}
           </h2>
         </div>
 
@@ -293,28 +321,11 @@ export default function DriversPage() {
               setPage(1);
             }}
           />
-
-          <div className="f1-segmented-tabs">
-            <button
-              type="button"
-              className={`seg-tab-btn ${viewMode === "grid" ? "active" : ""}`}
-              onClick={() => setViewMode("grid")}
-            >
-              {season} Grid
-            </button>
-            <button
-              type="button"
-              className={`seg-tab-btn ${viewMode === "archive" ? "active" : ""}`}
-              onClick={() => setViewMode("archive")}
-            >
-              All-Time Archive
-            </button>
-          </div>
         </div>
       </div>
 
-      {/* 1. 2-COLUMN EDITORIAL DRIVER CARDS (Reference 3 Aesthetic) */}
-      {viewMode === "grid" && (
+      {/* 1. 2-COLUMN EDITORIAL DRIVER CARDS (Season Grid) */}
+      {!isArchiveMode && (
         <div className="mb-4">
           {loadingSeasonDrivers ? (
             <div className="f1-loading-state">
@@ -329,16 +340,20 @@ export default function DriversPage() {
                   driver={d}
                   season={season}
                   numberLookup={archiveLookup.numbers}
-                  onSelect={() => handleOpenDriverProfile(d)}
+                  onSelect={() => handleOpenDriverProfile(d, true)}
                 />
               ))}
             </div>
-          ) : null}
+          ) : (
+            <div className="f1-empty-state">
+              No drivers found for {season}.
+            </div>
+          )}
         </div>
       )}
 
       {/* 2. ALL-TIME HISTORICAL DRIVERS ARCHIVE TABLE */}
-      {showArchiveTable && (
+      {isArchiveMode && (
         <div className="f1-minimal-panel">
           <div className="panel-header-bar">
             <div>
@@ -379,23 +394,13 @@ export default function DriversPage() {
                   >
                     NATIONALITY <span className="sort-icon"></span>
                   </th>
-                  <th
-                    className={
-                      sortKey === "date_of_birth"
-                        ? `sort-${sortDir}`
-                        : "sortable"
-                    }
-                    onClick={() => requestSort("date_of_birth")}
-                  >
-                    DATE OF BIRTH <span className="sort-icon"></span>
-                  </th>
                   <th className="text-right">CAREER PROFILE</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan="5" className="table-state-cell">
+                    <td colSpan="4" className="table-state-cell">
                       Loading drivers archive...
                     </td>
                   </tr>
@@ -421,7 +426,6 @@ export default function DriversPage() {
                         <CountryFlag name={d.nationality} size={18} />
                         <span>{d.nationality || "-"}</span>
                       </td>
-                      <td className="cell-tabular">{d.date_of_birth || "-"}</td>
                       <td className="text-right">
                         <button
                           type="button"
@@ -439,7 +443,7 @@ export default function DriversPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="table-state-cell">
+                    <td colSpan="4" className="table-state-cell">
                       No drivers found.
                     </td>
                   </tr>
@@ -461,7 +465,7 @@ export default function DriversPage() {
       <Modal
         isOpen={!!selectedDriverId}
         onClose={handleCloseModal}
-        title="Driver Career Telemetry Profile"
+        title="Driver Career Profile"
       >
         {loadingProfile ? (
           <div className="f1-loading-state">
@@ -472,19 +476,6 @@ export default function DriversPage() {
           <div className="driver-profile-modal-content">
             <div className="profile-modal-hero">
               <div className="profile-modal-info">
-                <div className="profile-modal-meta-row">
-                  {profileNumber && (
-                    <span className="f1-minimal-pill pill-accent">
-                      Driver Number: {profileNumber}
-                    </span>
-                  )}
-                  <span className="f1-minimal-pill">
-                    Date of Birth:{" "}
-                    {activeProfile.birth_date ||
-                      activeProfile.date_of_birth ||
-                      "N/A"}
-                  </span>
-                </div>
                 <h2 className="profile-modal-name">
                   <WikiLink
                     text={activeProfile.full_name}
@@ -494,6 +485,17 @@ export default function DriversPage() {
                 <div className="profile-modal-nation">
                   <CountryFlag name={activeProfile.nationality} size={20} />
                   <span>{activeProfile.nationality}</span>
+                </div>
+                <div className="profile-modal-plain-meta">
+                  <span>
+                    Latest Number Driver : {profileNumber || "-"}
+                  </span>
+                  <span>
+                    Date of Birth :{" "}
+                    {activeProfile.birth_date ||
+                      activeProfile.date_of_birth ||
+                      "-"}
+                  </span>
                 </div>
               </div>
 
@@ -510,30 +512,118 @@ export default function DriversPage() {
               )}
             </div>
 
-            <div className="profile-stats-grid">
-              <div className="minimal-kpi-box">
-                <span className="kpi-overline">CAREER WINS</span>
-                <strong className="kpi-number">
-                  {activeProfile.total_career_wins ?? 0}
-                </strong>
+            {/* 1. SEASON SUMMARY (Only shown when opened for a driver in the active season) */}
+            {isSeasonContext && activeProfile.season_year && (
+              <div className="driver-stat-section">
+                <div className="driver-stat-pair-grid">
+                  <div className="driver-stat-cell">
+                    <span className="driver-stat-label">
+                      {activeProfile.season_year} Season Position
+                    </span>
+                    <strong className="driver-stat-val">
+                      {formatOrdinal(activeProfile.season_position)}
+                    </strong>
+                  </div>
+                  <div className="driver-stat-cell">
+                    <span className="driver-stat-label">
+                      {activeProfile.season_year} Season Points
+                    </span>
+                    <strong className="driver-stat-val">
+                      {activeProfile.season_points ?? 0}
+                    </strong>
+                  </div>
+                  {activeProfile.season_team && (
+                    <div className="driver-stat-cell driver-stat-span2">
+                      <span className="driver-stat-label">
+                        {activeProfile.season_year} Team
+                      </span>
+                      <strong className="driver-stat-val-sm">
+                        {activeProfile.season_team}
+                      </strong>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="minimal-kpi-box">
-                <span className="kpi-overline">CAREER PODIUMS</span>
-                <strong className="kpi-number">
-                  {activeProfile.total_career_podiums ?? 0}
-                </strong>
-              </div>
-              <div className="minimal-kpi-box">
-                <span className="kpi-overline">RACES ENTERED</span>
-                <strong className="kpi-number">
-                  {activeProfile.total_races_entered ?? 0}
-                </strong>
-              </div>
-              <div className="minimal-kpi-box">
-                <span className="kpi-overline">CAREER POINTS</span>
-                <strong className="kpi-number">
-                  {activeProfile.total_career_points ?? 0}
-                </strong>
+            )}
+
+            {/* 2. FOCUSED CAREER STATISTICS (2-Column Editorial Hairline Grid) */}
+            <div className="driver-stat-section">
+              <div className="driver-stat-pair-grid">
+                <div className="driver-stat-cell">
+                  <span className="driver-stat-label">Grand Prix Races</span>
+                  <strong className="driver-stat-val">
+                    {activeProfile.total_races_entered ?? 0}
+                  </strong>
+                </div>
+                <div className="driver-stat-cell">
+                  <span className="driver-stat-label">Grand Prix Points</span>
+                  <strong className="driver-stat-val">
+                    {activeProfile.total_career_points ?? 0}
+                  </strong>
+                </div>
+
+                <div className="driver-stat-cell">
+                  <span className="driver-stat-label">Grand Prix Wins</span>
+                  <strong className="driver-stat-val">
+                    {activeProfile.total_career_wins ?? 0}
+                  </strong>
+                </div>
+                <div className="driver-stat-cell">
+                  <span className="driver-stat-label">Podiums</span>
+                  <strong className="driver-stat-val">
+                    {activeProfile.total_career_podiums ?? 0}
+                  </strong>
+                </div>
+
+                <div className="driver-stat-cell">
+                  <span className="driver-stat-label">Poles</span>
+                  <strong className="driver-stat-val">
+                    {activeProfile.total_career_poles ?? 0}
+                  </strong>
+                </div>
+                <div className="driver-stat-cell">
+                  <span className="driver-stat-label">Fastest Laps</span>
+                  <strong className="driver-stat-val">
+                    {activeProfile.total_fastest_laps ?? 0}
+                  </strong>
+                </div>
+
+                <div className="driver-stat-cell">
+                  <span className="driver-stat-label">DNFs</span>
+                  <strong className="driver-stat-val">
+                    {activeProfile.total_dnfs ?? 0}
+                  </strong>
+                </div>
+                <div className="driver-stat-cell">
+                  <span className="driver-stat-label">World Champions</span>
+                  <strong className="driver-stat-val">
+                    {activeProfile.world_championships ?? 0}
+                  </strong>
+                </div>
+
+                <div className="driver-stat-cell">
+                  <span className="driver-stat-label">Highest Grid</span>
+                  <strong className="driver-stat-val">
+                    {activeProfile.highest_grid
+                      ? `P${activeProfile.highest_grid}`
+                      : "-"}
+                  </strong>
+                </div>
+                <div className="driver-stat-cell">
+                  <span className="driver-stat-label">Seasons Active</span>
+                  <strong className="driver-stat-val-sm">
+                    {activeProfile.seasons_active || "-"}
+                  </strong>
+                </div>
+
+                {activeProfile.teams_driven_for && (
+                  <div className="driver-stat-cell driver-stat-span2">
+                    <span className="driver-stat-label">Teams Driven For</span>
+                    <strong className="driver-stat-val-sm">
+                      {activeProfile.teams_driven_for}
+                    </strong>
+                  </div>
+                )}
               </div>
             </div>
           </div>

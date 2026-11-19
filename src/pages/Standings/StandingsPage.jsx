@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { useSeason } from "../../context/SeasonContext";
 import { F1Api, toArray } from "../../api/client";
 import WikiLink from "../../components/common/WikiLink";
@@ -142,7 +143,17 @@ function ConstructorPodiumCard({ constructorItem, rank, season }) {
 
 export default function StandingsPage() {
   const { season } = useSeason();
-  const [tab, setTab] = useState("drivers"); // 'drivers' | 'constructors'
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const [tab, setTab] = useState(
+    tabParam === "constructors" ? "constructors" : "drivers"
+  );
+
+  useEffect(() => {
+    if (tabParam === "constructors" || tabParam === "drivers") {
+      setTab(tabParam);
+    }
+  }, [tabParam]);
 
   const { data: driversData = [], isLoading: loadingDrivers } = useQuery({
     queryKey: ["driverStandings", season],
@@ -196,25 +207,25 @@ export default function StandingsPage() {
           <span className="page-overline">{season} FIA FORMULA ONE WORLD CHAMPIONSHIP</span>
           <h2 className="page-main-title">Championship Standings</h2>
         </div>
+      </div>
 
-        <div className="f1-segmented-tabs">
-          <button
-            id="btn-standings-drivers"
-            type="button"
-            className={`seg-tab-btn ${tab === "drivers" ? "active" : ""}`}
-            onClick={() => setTab("drivers")}
-          >
-            Drivers
-          </button>
-          <button
-            id="btn-standings-constructors"
-            type="button"
-            className={`seg-tab-btn ${tab === "constructors" ? "active" : ""}`}
-            onClick={() => setTab("constructors")}
-          >
-            Constructors
-          </button>
-        </div>
+      <div className="f1-segmented-tabs f1-tabs-5050">
+        <button
+          id="btn-standings-drivers"
+          type="button"
+          className={`seg-tab-btn ${tab === "drivers" ? "active" : ""}`}
+          onClick={() => setTab("drivers")}
+        >
+          Drivers
+        </button>
+        <button
+          id="btn-standings-constructors"
+          type="button"
+          className={`seg-tab-btn ${tab === "constructors" ? "active" : ""}`}
+          onClick={() => setTab("constructors")}
+        >
+          Constructors
+        </button>
       </div>
 
       {isLoading ? (

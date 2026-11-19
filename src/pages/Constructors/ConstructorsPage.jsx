@@ -91,11 +91,10 @@ function ConstructorLiveryCard({ teamItem, teamDrivers = [], season }) {
   );
 }
 
-export default function ConstructorsPage() {
+export default function ConstructorsPage({ mode = "grid" }) {
   const { season } = useSeason();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'archive'
   const itemsPerPage = 15;
 
   // All-Time Historical Constructors Archive
@@ -177,19 +176,20 @@ export default function ConstructorsPage() {
     return sortedData.slice(start, start + itemsPerPage);
   }, [sortedData, safePage]);
 
-  const showArchiveTable =
-    viewMode === "archive" ||
-    search.trim().length > 0 ||
-    (!loadingSeasonTeams && safeSeasonTeams.length === 0);
+  const isArchiveMode = mode === "archive";
 
   return (
     <section id="view-constructors-db" className="content-view active">
       <div className="f1-page-header">
         <div>
           <span className="page-overline">
-            FORMULA 1 TEAMS & CHASSIS ARCHIVE
+            {isArchiveMode
+              ? "ALL-TIME FORMULA 1 TEAMS & CHASSIS ARCHIVE"
+              : `${season} FORMULA 1 CONSTRUCTORS`}
           </span>
-          <h2 className="page-main-title">Constructors & Teams Directory</h2>
+          <h2 className="page-main-title">
+            {isArchiveMode ? "Constructors Directory" : `${season} Constructors`}
+          </h2>
         </div>
 
         <div className="header-action-group">
@@ -204,28 +204,11 @@ export default function ConstructorsPage() {
               setPage(1);
             }}
           />
-
-          <div className="f1-segmented-tabs">
-            <button
-              type="button"
-              className={`seg-tab-btn ${viewMode === "grid" ? "active" : ""}`}
-              onClick={() => setViewMode("grid")}
-            >
-              {season} Teams
-            </button>
-            <button
-              type="button"
-              className={`seg-tab-btn ${viewMode === "archive" ? "active" : ""}`}
-              onClick={() => setViewMode("archive")}
-            >
-              All-Time Archive
-            </button>
-          </div>
         </div>
       </div>
 
-      {/* 1. 2-COLUMN CONSTRUCTOR CAR LIVERY SHOWCASE (Reference 4 Aesthetic) */}
-      {viewMode === "grid" && (
+      {/* 1. 2-COLUMN CONSTRUCTOR CAR LIVERY SHOWCASE (Season Grid) */}
+      {!isArchiveMode && (
         <div className="mb-4">
           {loadingSeasonTeams ? (
             <div className="f1-loading-state">
@@ -251,12 +234,16 @@ export default function ConstructorsPage() {
                 );
               })}
             </div>
-          ) : null}
+          ) : (
+            <div className="f1-empty-state">
+              No constructors found for {season}.
+            </div>
+          )}
         </div>
       )}
 
       {/* 2. ALL-TIME CONSTRUCTORS ARCHIVE TABLE */}
-      {showArchiveTable && (
+      {isArchiveMode && (
         <div className="f1-minimal-panel">
           <div className="panel-header-bar">
             <div>
@@ -295,23 +282,13 @@ export default function ConstructorsPage() {
                   >
                     NATIONALITY <span className="sort-icon"></span>
                   </th>
-                  <th
-                    className={
-                      sortKey === "constructorRef"
-                        ? `sort-${sortDir}`
-                        : "sortable"
-                    }
-                    onClick={() => requestSort("constructorRef")}
-                  >
-                    REFERENCE <span className="sort-icon"></span>
-                  </th>
                   <th className="text-right">HISTORY</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan="4" className="table-state-cell">
+                    <td colSpan="3" className="table-state-cell">
                       Loading constructors...
                     </td>
                   </tr>
@@ -330,9 +307,6 @@ export default function ConstructorsPage() {
                           size={18}
                         />
                         <span>{c.constructor_nationality || "-"}</span>
-                      </td>
-                      <td className="cell-muted cell-tabular">
-                        {c.constructorRef || "-"}
                       </td>
                       <td className="text-right">
                         {c.constructor_wiki_url ? (
@@ -353,7 +327,7 @@ export default function ConstructorsPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="4" className="table-state-cell">
+                    <td colSpan="3" className="table-state-cell">
                       No constructors found.
                     </td>
                   </tr>

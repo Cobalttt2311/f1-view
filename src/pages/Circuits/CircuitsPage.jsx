@@ -7,7 +7,6 @@ import Pagination from "../../components/common/Pagination";
 import DriverBadge from "../../components/common/DriverBadge";
 import TeamBadge from "../../components/common/TeamBadge";
 import { CountryFlag } from "../../utils/flags";
-import { useTableSort } from "../../utils/useTableSort";
 import { getCircuitTrackMap, getHeroImage } from "../../utils/f1Assets";
 
 function FeaturedCircuitCard({ circuit, onSelect }) {
@@ -94,7 +93,7 @@ function FeaturedCircuitCard({ circuit, onSelect }) {
 export default function CircuitsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const itemsPerPage = 15;
+  const itemsPerPage = 12;
 
   const [selectedCircuit, setSelectedCircuit] = useState(null);
 
@@ -131,34 +130,18 @@ export default function CircuitsPage() {
     );
   }, [safeCircuits, search]);
 
-  const {
-    sortedData: sortedCircuits,
-    sortKey,
-    sortDir,
-    requestSort,
-  } = useTableSort(filtered, "circuit_name");
+  const sortedCircuits = useMemo(() => {
+    return [...filtered].sort((a, b) =>
+      String(a?.circuit_name || "").localeCompare(String(b?.circuit_name || ""))
+    );
+  }, [filtered]);
 
   const totalPages = Math.ceil(sortedCircuits.length / itemsPerPage) || 1;
+  const safePage = Math.min(Math.max(1, page), totalPages);
   const paginated = useMemo(() => {
-    const start = (page - 1) * itemsPerPage;
+    const start = (safePage - 1) * itemsPerPage;
     return sortedCircuits.slice(start, start + itemsPerPage);
-  }, [sortedCircuits, page]);
-
-  // Featured circuits from the current page / search results that have local SVG track maps
-  const featuredCircuits = useMemo(() => {
-    return paginated
-      .filter((c) =>
-        Boolean(
-          getCircuitTrackMap(
-            c.circuit_name,
-            c.location,
-            c.country,
-            c.circuitRef
-          )
-        )
-      )
-      .slice(0, 6);
-  }, [paginated]);
+  }, [sortedCircuits, safePage]);
 
   const openCircuitWinners = (c) => {
     setSelectedCircuit({
@@ -194,136 +177,34 @@ export default function CircuitsPage() {
         </div>
       </div>
 
-      {/* FEATURED TRACK LAYOUT CARDS */}
-      {!isLoading && featuredCircuits.length > 0 && (
-        <div className="f1-circuits-featured-grid mb-4">
-          {featuredCircuits.map((c) => (
-            <FeaturedCircuitCard
-              key={c.circuitId || c.circuit_name}
-              circuit={c}
-              onSelect={() => openCircuitWinners(c)}
-            />
-          ))}
+      {/* CIRCUITS VISUAL CARD GRID + PAGINATION */}
+      {isLoading ? (
+        <div className="f1-loading-state">
+          <i className="fa-solid fa-spinner fa-spin fa-2x"></i>
+          <p>Loading circuits directory...</p>
         </div>
-      )}
-
-      {/* MINIMALIST CIRCUITS TABLE (Without ID Column) */}
-      <div className="f1-minimal-panel">
-        <div className="panel-header-bar">
-          <div>
-            <h3 className="panel-title">All-Time World Circuits Registry</h3>
-            <p className="panel-subtitle">
-              Click any circuit to inspect historical Grand Prix winners (
-              {filtered.length} venues)
-            </p>
+      ) : paginated.length > 0 ? (
+        <>
+          <div className="f1-circuits-featured-grid mb-4">
+            {paginated.map((c) => (
+              <FeaturedCircuitCard
+                key={c.circuitId || c.circuit_name}
+                circuit={c}
+                onSelect={() => openCircuitWinners(c)}
+              />
+            ))}
           </div>
-        </div>
 
-        <div className="table-responsive">
-          <table className="f1-minimal-table" id="circuits-directory-table">
-            <thead>
-              <tr>
-                <th
-                  className={
-                    sortKey === "circuit_name" ? `sort-${sortDir}` : "sortable"
-                  }
-                  onClick={() => requestSort("circuit_name")}
-                >
-                  CIRCUIT NAME <span className="sort-icon"></span>
-                </th>
-                <th
-                  className={
-                    sortKey === "location" ? `sort-${sortDir}` : "sortable"
-                  }
-                  onClick={() => requestSort("location")}
-                >
-                  LOCATION <span className="sort-icon"></span>
-                </th>
-                <th
-                  className={
-                    sortKey === "country" ? `sort-${sortDir}` : "sortable"
-                  }
-                  onClick={() => requestSort("country")}
-                >
-                  COUNTRY <span className="sort-icon"></span>
-                </th>
-                <th
-                  className={
-                    sortKey === "altitude_meters"
-                      ? `sort-${sortDir}`
-                      : "sortable"
-                  }
-                  onClick={() => requestSort("altitude_meters")}
-                >
-                  ALTITUDE <span className="sort-icon"></span>
-                </th>
-                <th className="text-right">HISTORY</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td colSpan="5" className="table-state-cell">
-                    Loading circuits directory...
-                  </td>
-                </tr>
-              ) : paginated.length > 0 ? (
-                paginated.map((c) => (
-                  <tr
-                    key={c.circuitId || c.circuit_name}
-                    className="clickable-row"
-                    onClick={() => openCircuitWinners(c)}
-                  >
-                    <td className="cell-strong">
-                      <WikiLink
-                        text={c.circuit_name}
-                        url={c.circuit_wiki_url}
-                      />
-                    </td>
-                    <td className="cell-muted">{c.location || "-"}</td>
-                    <td>
-                      <CountryFlag name={c.country} size={18} />
-                      <span>{c.country || "-"}</span>
-                    </td>
-                    <td className="cell-tabular">
-                      {c.altitude_meters !== undefined &&
-                      c.altitude_meters !== null
-                        ? `${c.altitude_meters}m`
-                        : "-"}
-                    </td>
-                    <td className="text-right">
-                      <button
-                        type="button"
-                        className="f1-row-action-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openCircuitWinners(c);
-                        }}
-                      >
-                        <span>Past Winners</span>
-                        <i className="fa-solid fa-arrow-right"></i>
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="5" className="table-state-cell">
-                    No circuits found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          totalItems={filtered.length}
-          onPageChange={(newPage) => setPage(newPage)}
-        />
-      </div>
+          <Pagination
+            page={safePage}
+            totalPages={totalPages}
+            totalItems={filtered.length}
+            onPageChange={(newPage) => setPage(newPage)}
+          />
+        </>
+      ) : (
+        <div className="f1-empty-state">No circuits found.</div>
+      )}
 
       {/* PAST GRAND PRIX WINNERS MODAL (Reference 1 Table Style) */}
       <Modal

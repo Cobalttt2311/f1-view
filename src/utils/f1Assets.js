@@ -383,7 +383,7 @@ const CIRCUIT_MATCHERS = [
   {
     keywords: ["sepang", "kuala lumpur", "malaysia"],
     svg: "sepang",
-    hero: null,
+    hero: "sepang",
   },
   {
     keywords: ["jeddah corniche", "jeddah", "saudi arabia"],
@@ -464,7 +464,7 @@ const CIRCUIT_MATCHERS = [
     keywords: ["madring", "ifema", "madrid"],
     exclude: ["jarama"],
     svg: "madring",
-    hero: "spain",
+    hero: "madring",
   },
   {
     keywords: ["jarama"],
@@ -670,87 +670,87 @@ const CIRCUIT_MATCHERS = [
   {
     keywords: ["paul ricard", "le castellet"],
     svg: "paul-ricard",
-    hero: null,
+    hero: "paul_ricard",
   },
   {
     keywords: ["magny-cours", "nevers"],
     svg: "magny-cours",
-    hero: null,
+    hero: "magny_cours",
   },
   {
     keywords: ["dijon-prenois", "dijon"],
     svg: "dijon",
-    hero: null,
+    hero: "dijon",
   },
   {
     keywords: ["charade", "clermont-ferrand"],
     svg: "clermont-ferrand",
-    hero: null,
+    hero: "clermont_ferrand",
   },
   {
     keywords: ["rouen-les-essarts", "rouen"],
     svg: "rouen",
-    hero: null,
+    hero: "rouen",
   },
   {
     keywords: ["reims-gueux", "reims"],
     svg: "reims",
-    hero: null,
+    hero: "reims",
   },
   {
     keywords: ["bugatti", "le mans"],
     svg: "bugatti",
-    hero: null,
+    hero: "lemans",
   },
   {
     keywords: ["hockenheimring", "hockenheim"],
     svg: "hockenheimring",
-    hero: null,
+    hero: "hockenheimring",
   },
   {
     keywords: ["nürburgring", "nurburgring", "nürburg", "nurburg"],
     svg: "nurburgring",
-    hero: null,
+    hero: "nurburgring",
   },
   {
     keywords: ["avus", "berlin"],
     svg: "avus",
-    hero: null,
+    hero: "avus",
   },
   {
     keywords: ["algarve", "portimão", "portimao"],
     svg: "portimao",
-    hero: null,
+    hero: "portimao",
   },
   {
     keywords: ["estoril"],
     svg: "estoril",
-    hero: null,
+    hero: "estoril",
   },
   {
     keywords: ["boavista", "porto", "oport"],
     svg: "porto",
-    hero: null,
+    hero: "porto",
   },
   {
     keywords: ["monsanto", "lisbon"],
     svg: "monsanto",
-    hero: null,
+    hero: "monsanto",
   },
   {
     keywords: ["sochi autodrom", "sochi"],
     svg: "sochi",
-    hero: null,
+    hero: "sochi",
   },
   {
     keywords: ["istanbul park", "istanbul", "turkey"],
     svg: "istanbul",
-    hero: null,
+    hero: "istanbul",
   },
   {
     keywords: ["kyalami", "midrand"],
     svg: "kyalami",
-    hero: null,
+    hero: "kyalami",
   },
   {
     keywords: ["prince george", "east london"],
@@ -760,27 +760,27 @@ const CIRCUIT_MATCHERS = [
   {
     keywords: ["oscar galvez", "gálvez", "buenos aires", "argentina"],
     svg: "buenos-aires",
-    hero: null,
+    hero: "buenos_aires",
   },
   {
     keywords: ["buddh", "greater noida", "india"],
     svg: "buddh",
-    hero: null,
+    hero: "buddh",
   },
   {
     keywords: ["korean international", "yeongam", "korea"],
     svg: "yeongam",
-    hero: null,
+    hero: "yeongam",
   },
   {
     keywords: ["scandinavian raceway", "anderstorp", "sweden"],
     svg: "anderstorp",
-    hero: null,
+    hero: "anderstorp",
   },
   {
     keywords: ["bremgarten", "bern", "switzerland"],
     svg: "bremgarten",
-    hero: null,
+    hero: "bremgarten",
   },
   {
     keywords: ["ain diab", "casablanca", "morocco"],

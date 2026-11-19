@@ -57,7 +57,12 @@ export const F1Api = {
   getCircuits: () => fetchJson("/circuits"),
   getCircuitHistory: (circuitId) => fetchJson(`/circuits/${circuitId}/history`),
   getDrivers: () => fetchJson("/drivers"),
-  getDriverProfile: (driverId) => fetchJson(`/drivers/${driverId}/profile`),
+  getDriverProfile: (driverId, year = null) =>
+    fetchJson(
+      year
+        ? `/drivers/${driverId}/profile?year=${year}`
+        : `/drivers/${driverId}/profile`
+    ),
   getConstructors: () => fetchJson("/constructors"),
 
   // Calendars & Schedules
