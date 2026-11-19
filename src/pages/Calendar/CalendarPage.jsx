@@ -114,22 +114,62 @@ export default function CalendarPage() {
       return;
     }
     const targetTime = new Date(`${nextRace.race_date}T12:00:00Z`).getTime();
-    const updateTimer = () => {
+    const getHMS = () => {
       const diff = targetTime - Date.now();
-      if (diff <= 0) {
+      if (diff <= 0) return null;
+      return {
+        hours: Math.floor(diff / (1000 * 60 * 60)),
+        mins: Math.floor((diff / 1000 / 60) % 60),
+        secs: Math.floor((diff / 1000) % 60),
+      };
+    };
+
+    const formatHMS = (h, m, s) =>
+      `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+
+    const updateTimer = () => {
+      const parts = getHMS();
+      if (!parts) {
         setCountdownStr("COMPLETED");
         return;
       }
-      const totalHours = Math.floor(diff / (1000 * 60 * 60));
-      const mins = Math.floor((diff / 1000 / 60) % 60);
-      const secs = Math.floor((diff / 1000) % 60);
-      setCountdownStr(
-        `${String(totalHours).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
-      );
+      setCountdownStr(formatHMS(parts.hours, parts.mins, parts.secs));
     };
-    updateTimer();
+
+    const initialParts = getHMS();
+    if (!initialParts) {
+      setCountdownStr("COMPLETED");
+      return;
+    }
+
+    let rafId = null;
+    let startTime = null;
+    const duration = 550;
+
+    const animateIntro = (ts) => {
+      if (!startTime) startTime = ts;
+      const progress = Math.min((ts - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      if (progress >= 1) {
+        updateTimer();
+        return;
+      }
+      setCountdownStr(
+        formatHMS(
+          Math.round(initialParts.hours * eased),
+          Math.round(initialParts.mins * eased),
+          Math.round(initialParts.secs * eased)
+        )
+      );
+      rafId = requestAnimationFrame(animateIntro);
+    };
+
+    rafId = requestAnimationFrame(animateIntro);
     const timer = setInterval(updateTimer, 1000);
-    return () => clearInterval(timer);
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      clearInterval(timer);
+    };
   }, [nextRace]);
 
   const activeSvgUrl = activeRace

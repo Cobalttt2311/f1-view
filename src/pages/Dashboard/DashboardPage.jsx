@@ -113,19 +113,52 @@ export default function DashboardPage() {
 
     if (found && found.race_date) {
       const targetTime = new Date(`${found.race_date}T12:00:00Z`).getTime();
+      const getParts = () => {
+        const diff = targetTime - Date.now();
+        if (diff <= 0) return { days: 0, hours: 0, mins: 0, secs: 0 };
+        return {
+          days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+          mins: Math.floor((diff / 1000 / 60) % 60),
+          secs: Math.floor((diff / 1000) % 60),
+        };
+      };
+
+      let rafId = null;
+      let startTime = null;
+      const duration = 550;
+      const initialTarget = getParts();
+
+      const animateIntro = (ts) => {
+        if (!startTime) startTime = ts;
+        const progress = Math.min((ts - startTime) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        if (progress >= 1) {
+          setCountdown(getParts());
+          return;
+        }
+        setCountdown({
+          days: Math.round(initialTarget.days * eased),
+          hours: Math.round(initialTarget.hours * eased),
+          mins: Math.round(initialTarget.mins * eased),
+          secs: Math.round(initialTarget.secs * eased),
+        });
+        rafId = requestAnimationFrame(animateIntro);
+      };
+
+      rafId = requestAnimationFrame(animateIntro);
+
       const interval = setInterval(() => {
-        const now = new Date().getTime();
-        const diff = targetTime - now;
+        const diff = targetTime - Date.now();
         if (diff > 0) {
-          setCountdown({
-            days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-            hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-            mins: Math.floor((diff / 1000 / 60) % 60),
-            secs: Math.floor((diff / 1000) % 60),
-          });
+          setCountdown(getParts());
         }
       }, 1000);
-      return () => clearInterval(interval);
+
+      return () => {
+        if (rafId) cancelAnimationFrame(rafId);
+        clearInterval(interval);
+      };
     }
   }, [races]);
 
