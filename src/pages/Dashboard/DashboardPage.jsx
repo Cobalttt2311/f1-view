@@ -7,6 +7,7 @@ import { F1Api, toArray } from "../../api/client";
 import DriverBadge from "../../components/common/DriverBadge";
 import TeamBadge from "../../components/common/TeamBadge";
 import WikiLink from "../../components/common/WikiLink";
+import AnimatedNumber from "../../components/common/AnimatedNumber";
 import { CountryFlag } from "../../utils/flags";
 import {
   DEFAULT_CAR_SILHOUETTE,
@@ -361,12 +362,16 @@ export default function DashboardPage() {
 
             <div className="leader-metrics-row" id="dash-driver-leader-pts">
               <div className="leader-metric">
-                <span className="metric-val">{dLeader?.total_points ?? 0}</span>
+                <span className="metric-val">
+                  <AnimatedNumber value={dLeader?.total_points ?? 0} />
+                </span>
                 <span className="metric-unit">PTS</span>
               </div>
               <div className="leader-metric-divider" />
               <div className="leader-metric">
-                <span className="metric-val">{dLeader?.total_wins ?? 0}</span>
+                <span className="metric-val">
+                  <AnimatedNumber value={dLeader?.total_wins ?? 0} />
+                </span>
                 <span className="metric-unit">WINS</span>
               </div>
             </div>
@@ -431,12 +436,16 @@ export default function DashboardPage() {
 
             <div className="leader-metrics-row" id="dash-team-leader-pts">
               <div className="leader-metric">
-                <span className="metric-val">{cLeader?.total_points ?? 0}</span>
+                <span className="metric-val">
+                  <AnimatedNumber value={cLeader?.total_points ?? 0} />
+                </span>
                 <span className="metric-unit">PTS</span>
               </div>
               <div className="leader-metric-divider" />
               <div className="leader-metric">
-                <span className="metric-val">{cLeader?.total_wins ?? 0}</span>
+                <span className="metric-val">
+                  <AnimatedNumber value={cLeader?.total_wins ?? 0} />
+                </span>
                 <span className="metric-unit">WINS</span>
               </div>
             </div>
@@ -461,7 +470,7 @@ export default function DashboardPage() {
           <div className="minimal-kpi-box">
             <span className="kpi-overline">Rounds</span>
             <strong id="dash-total-races" className="kpi-number">
-              {races.length}
+              <AnimatedNumber value={races.length} />
             </strong>
             <span id="dash-races-sub" className="kpi-sub">
               {season} Season
@@ -471,7 +480,7 @@ export default function DashboardPage() {
           <div className="minimal-kpi-box">
             <span className="kpi-overline">Completed</span>
             <strong id="dash-completed-races" className="kpi-number">
-              {completedRaces}
+              <AnimatedNumber value={completedRaces} />
             </strong>
             <span className="kpi-sub">
               {remainingRaces > 0 ? `${remainingRaces} Left` : "Finished"}
@@ -481,7 +490,7 @@ export default function DashboardPage() {
           <div className="minimal-kpi-box">
             <span className="kpi-overline">Teams</span>
             <strong id="dash-active-teams" className="kpi-number">
-              {constructors.length}
+              <AnimatedNumber value={constructors.length} />
             </strong>
             <span className="kpi-sub">Constructors</span>
           </div>
@@ -489,7 +498,10 @@ export default function DashboardPage() {
           <div className="minimal-kpi-box">
             <span className="kpi-overline">P1 Lead</span>
             <strong id="dash-p1-lead" className="kpi-number">
-              {p1Lead > 0 ? `+${p1Lead}` : p1Lead}
+              <AnimatedNumber
+                value={p1Lead}
+                prefix={p1Lead > 0 ? "+" : ""}
+              />
             </strong>
             <span className="kpi-sub">pts Gap</span>
           </div>

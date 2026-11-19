@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSeason } from "../../context/SeasonContext";
 import { F1Api, toArray, toObject } from "../../api/client";
 import WikiLink from "../../components/common/WikiLink";
+import AnimatedNumber from "../../components/common/AnimatedNumber";
 import Modal from "../../components/common/Modal";
 import Pagination from "../../components/common/Pagination";
 import DriverBadge from "../../components/common/DriverBadge";
@@ -529,7 +530,7 @@ export default function DriversPage({ mode = "grid" }) {
                       {activeProfile.season_year} Season Points
                     </span>
                     <strong className="driver-stat-val">
-                      {activeProfile.season_points ?? 0}
+                      <AnimatedNumber value={activeProfile.season_points ?? 0} />
                     </strong>
                   </div>
                   {activeProfile.season_team && (
@@ -552,52 +553,52 @@ export default function DriversPage({ mode = "grid" }) {
                 <div className="driver-stat-cell">
                   <span className="driver-stat-label">Grand Prix Races</span>
                   <strong className="driver-stat-val">
-                    {activeProfile.total_races_entered ?? 0}
+                    <AnimatedNumber value={activeProfile.total_races_entered ?? 0} />
                   </strong>
                 </div>
                 <div className="driver-stat-cell">
                   <span className="driver-stat-label">Grand Prix Points</span>
                   <strong className="driver-stat-val">
-                    {activeProfile.total_career_points ?? 0}
+                    <AnimatedNumber value={activeProfile.total_career_points ?? 0} />
                   </strong>
                 </div>
 
                 <div className="driver-stat-cell">
                   <span className="driver-stat-label">Grand Prix Wins</span>
                   <strong className="driver-stat-val">
-                    {activeProfile.total_career_wins ?? 0}
+                    <AnimatedNumber value={activeProfile.total_career_wins ?? 0} />
                   </strong>
                 </div>
                 <div className="driver-stat-cell">
                   <span className="driver-stat-label">Podiums</span>
                   <strong className="driver-stat-val">
-                    {activeProfile.total_career_podiums ?? 0}
+                    <AnimatedNumber value={activeProfile.total_career_podiums ?? 0} />
                   </strong>
                 </div>
 
                 <div className="driver-stat-cell">
                   <span className="driver-stat-label">Poles</span>
                   <strong className="driver-stat-val">
-                    {activeProfile.total_career_poles ?? 0}
+                    <AnimatedNumber value={activeProfile.total_career_poles ?? 0} />
                   </strong>
                 </div>
                 <div className="driver-stat-cell">
                   <span className="driver-stat-label">Fastest Laps</span>
                   <strong className="driver-stat-val">
-                    {activeProfile.total_fastest_laps ?? 0}
+                    <AnimatedNumber value={activeProfile.total_fastest_laps ?? 0} />
                   </strong>
                 </div>
 
                 <div className="driver-stat-cell">
                   <span className="driver-stat-label">DNFs</span>
                   <strong className="driver-stat-val">
-                    {activeProfile.total_dnfs ?? 0}
+                    <AnimatedNumber value={activeProfile.total_dnfs ?? 0} />
                   </strong>
                 </div>
                 <div className="driver-stat-cell">
                   <span className="driver-stat-label">World Champions</span>
                   <strong className="driver-stat-val">
-                    {activeProfile.world_championships ?? 0}
+                    <AnimatedNumber value={activeProfile.world_championships ?? 0} />
                   </strong>
                 </div>
 
