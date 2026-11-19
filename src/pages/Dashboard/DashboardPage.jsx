@@ -253,7 +253,7 @@ export default function DashboardPage() {
                 {isLiveNow
                   ? "LIVE RACE WEEKEND"
                   : isPastSeason
-                    ? "SEASON FINALE"
+                    ? "SEASON FINISHED"
                     : "UPCOMING GRAND PRIX"}
               </span>
               {targetRace.has_sprint && (
