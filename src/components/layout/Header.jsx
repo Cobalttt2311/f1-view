@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTimezone } from "../../context/TimezoneContext";
 import { F1Api } from "../../api/client";
@@ -21,11 +22,11 @@ export default function Header({ onToggleMobileSidebar }) {
   const lastSyncStr =
     timezone === "WIB"
       ? syncMeta?.last_synced_at_wib ||
-        syncMeta?.last_synced_at_utc ||
-        "Up to date"
+      syncMeta?.last_synced_at_utc ||
+      "Up to date"
       : syncMeta?.last_synced_at_utc ||
-        syncMeta?.last_synced_at_wib ||
-        "Up to date";
+      syncMeta?.last_synced_at_wib ||
+      "Up to date";
 
   return (
     <header className="f1-header">
@@ -38,33 +39,36 @@ export default function Header({ onToggleMobileSidebar }) {
         >
           <i className="fa-solid fa-bars"></i>
         </button>
-        <div className="header-brand">
+        <Link to="/dashboard" className="header-brand" title="Go to Dashboard">
           <img
-            src="/assets/logo.png"
+            src="/assets/common/logo.png"
             alt="Tifosi Logo"
             className="brand-logo-img"
           />
+          <span className="brand-slash-divider" aria-hidden="true" />
           <div className="brand-title">
             <h1 className="brand-logo-text">{NAME.APP_NAME}</h1>
             <p className="brand-subtitle">{NAME.SUB_NAME}</p>
           </div>
-        </div>
+        </Link>
       </div>
 
+      {/* Unified Precision Header Control Cluster: [● Synced] [2024 ▾] [WIB | UTC] */}
       <div className="header-controls">
-        {/* Global Last Update Indicator with Hover Details */}
+        {/* 1. Sync Status Pill */}
         <div
-          className={`last-update-container ${showSyncPopover ? "active" : ""}`}
+          className={`header-ctrl-pill sync-pill ${showSyncPopover ? "active" : ""}`}
           id="last-update-container"
           onClick={() => setShowSyncPopover((prev) => !prev)}
           onMouseEnter={() => setShowSyncPopover(true)}
           onMouseLeave={() => setShowSyncPopover(false)}
         >
-          <span className="sync-status-indicator" id="sync-status-dot">
-            <span className="sync-dot pulse-green"></span>
+          <span className="sync-dot-wrapper" id="sync-status-dot">
+            <span className="sync-dot-core"></span>
+            <span className="sync-dot-ring"></span>
           </span>
-          <span className="last-update-label">Last Updated:</span>
-          <span className="last-update-value" id="last-update-display">
+          <span className="sync-pill-prefix">Synced:</span>
+          <span className="sync-pill-time" id="last-update-display">
             {lastSyncStr}
           </span>
 
@@ -75,60 +79,53 @@ export default function Header({ onToggleMobileSidebar }) {
             style={{ display: showSyncPopover ? "block" : "none" }}
           >
             <div className="popover-header">
-              <i className="fa-solid fa-clock-rotate-left text-cyan"></i>
-              <span>Database Sync Time</span>
+              <span className="popover-title-dot"></span>
+              <span>Last Database Sync</span>
+              <span className="popover-status-tag" id="popover-sync-status">
+                {syncMeta?.status || "ONLINE"}
+              </span>
             </div>
             <div className="popover-body">
               <div className="popover-row">
-                <span className="popover-label">Status:</span>
-                <span
-                  className="popover-val status-badge"
-                  id="popover-sync-status"
-                >
-                  {syncMeta?.status || "SUCCESS"}
+                <span className="popover-label">WIB (UTC+7)</span>
+                <span className="popover-val" id="popover-sync-wib">
+                  {syncMeta?.last_synced_at_wib || "Up to date"}
                 </span>
               </div>
               <div className="popover-row">
-                <span className="popover-label">WIB (UTC+7):</span>
-                <span className="popover-val font-mono" id="popover-sync-wib">
-                  {syncMeta?.last_synced_at_wib || "-"}
-                </span>
-              </div>
-              <div className="popover-row">
-                <span className="popover-label">UTC:</span>
-                <span className="popover-val font-mono" id="popover-sync-utc">
-                  {syncMeta?.last_synced_at_utc || "-"}
+                <span className="popover-label">UTC</span>
+                <span className="popover-val" id="popover-sync-utc">
+                  {syncMeta?.last_synced_at_utc || "Up to date"}
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Global Custom Season Dropdown */}
+        {/* 2. Season Dropdown Pill [2024 ▾] */}
         <CustomSeasonDropdown />
 
-        {/* Global Timezone Switcher */}
-        <div className="tz-switch-container">
-          <span className="tz-label">
-            <i className="fa-regular fa-clock"></i> Time Zone:
-          </span>
-          <div className="tz-toggle-group">
-            <button
-              id="tz-btn-wib"
-              className={`tz-btn ${timezone === "WIB" ? "active" : ""}`}
-              onClick={() => setTimezone("WIB")}
-            >
-              <span className="tz-full">WIB (UTC+7)</span>
-              <span className="tz-short">WIB</span>
-            </button>
-            <button
-              id="tz-btn-utc"
-              className={`tz-btn ${timezone === "UTC" ? "active" : ""}`}
-              onClick={() => setTimezone("UTC")}
-            >
-              UTC
-            </button>
-          </div>
+        {/* 3. Segmented Timezone Switcher [WIB | UTC] */}
+        <div className="header-ctrl-pill tz-segmented-pill" role="group" aria-label="Timezone Switcher">
+          <button
+            id="tz-btn-wib"
+            type="button"
+            className={`tz-seg-btn ${timezone === "WIB" ? "active" : ""}`}
+            onClick={() => setTimezone("WIB")}
+            title="Western Indonesian Time (UTC+7)"
+          >
+            WIB
+          </button>
+          <span className="tz-seg-divider" aria-hidden="true"></span>
+          <button
+            id="tz-btn-utc"
+            type="button"
+            className={`tz-seg-btn ${timezone === "UTC" ? "active" : ""}`}
+            onClick={() => setTimezone("UTC")}
+            title="Coordinated Universal Time"
+          >
+            UTC
+          </button>
         </div>
       </div>
     </header>

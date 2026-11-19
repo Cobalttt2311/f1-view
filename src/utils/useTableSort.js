@@ -14,24 +14,31 @@ export function useTableSort(data = [], defaultKey = null, defaultDir = "asc") {
   };
 
   const sortedData = useMemo(() => {
-    if (!sortKey || !Array.isArray(data) || data.length === 0) return data;
+    if (!Array.isArray(data)) return [];
+    if (!sortKey || data.length === 0) return data;
 
     return [...data].sort((a, b) => {
+      if (!a || !b) return 0;
       let valA = a[sortKey];
       let valB = b[sortKey];
 
-      if (valA === undefined || valA === null) valA = "";
-      if (valB === undefined || valB === null) valB = "";
+      if (valA === undefined || valA === null || valA === "\\N") valA = "";
+      if (valB === undefined || valB === null || valB === "\\N") valB = "";
 
-      // Special handling for position strings like "P1", "PL", "Stop 1"
       const strA = String(valA).trim();
       const strB = String(valB).trim();
 
       if (strA === "PL") return sortDir === "asc" ? 1 : -1;
       if (strB === "PL") return sortDir === "asc" ? -1 : 1;
 
-      const numA = typeof valA === "number" ? valA : parseFloat(strA.replace(/[^0-9.-]+/g, ""));
-      const numB = typeof valB === "number" ? valB : parseFloat(strB.replace(/[^0-9.-]+/g, ""));
+      const numA =
+        typeof valA === "number"
+          ? valA
+          : parseFloat(strA.replace(/[^0-9.-]+/g, ""));
+      const numB =
+        typeof valB === "number"
+          ? valB
+          : parseFloat(strB.replace(/[^0-9.-]+/g, ""));
 
       let res = 0;
       if (!isNaN(numA) && !isNaN(numB) && /\d/.test(strA) && /\d/.test(strB)) {
@@ -48,4 +55,3 @@ export function useTableSort(data = [], defaultKey = null, defaultDir = "asc") {
 }
 
 export default useTableSort;
-

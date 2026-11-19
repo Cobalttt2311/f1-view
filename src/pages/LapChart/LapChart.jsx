@@ -13,8 +13,12 @@ import {
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { useSeason } from "../../context/SeasonContext";
-import { F1Api } from "../../api/client";
-import { getDriverColor } from "../../utils/teamColors";
+import { F1Api, toArray } from "../../api/client";
+import {
+  getDriverCode,
+  getDriverColor,
+  getTeamShortCode,
+} from "../../utils/teamColors";
 import DriverBadge from "../../components/common/DriverBadge";
 
 ChartJS.register(
@@ -24,7 +28,7 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend,
+  Legend
 );
 
 export default function LapChart() {
@@ -34,7 +38,6 @@ export default function LapChart() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterRef = useRef(null);
 
-  // Close filter dropdown on click outside
   useEffect(() => {
     function handleClickOutside(e) {
       if (filterRef.current && !filterRef.current.contains(e.target)) {
@@ -45,35 +48,34 @@ export default function LapChart() {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
-  // Fetch season calendar for round dropdown
-  const { data: races = [] } = useQuery({
+  const { data: racesData = [] } = useQuery({
     queryKey: ["raceCalendar", season],
     queryFn: async () => {
       const res = await F1Api.getRaceCalendar(season);
-      return res?.data || res || [];
+      return toArray(res);
     },
   });
+  const races = Array.isArray(racesData) ? racesData : [];
 
-  // Fetch lap progression telemetry
   const { data: rawLaps = [], isLoading } = useQuery({
     queryKey: ["lapChart", season, selectedRound],
     queryFn: async () => {
       const res = await F1Api.getLapChart(season, selectedRound);
-      return res?.data || res || [];
+      return toArray(res);
     },
     enabled: !!selectedRound,
   });
 
-  const { data: raceResults = [] } = useQuery({
+  const { data: raceResultsData = [] } = useQuery({
     queryKey: ["raceResultforLapChart", season, selectedRound],
     queryFn: async () => {
       const res = await F1Api.getRaceResults(season, selectedRound);
-      return res?.data || res || [];
+      return toArray(res);
     },
     enabled: !!selectedRound,
   });
+  const raceResults = Array.isArray(raceResultsData) ? raceResultsData : [];
 
-  // Transform data for Chart.js
   const chartData = useMemo(() => {
     if (!rawLaps || !Array.isArray(rawLaps) || rawLaps.length === 0)
       return null;
@@ -91,15 +93,25 @@ export default function LapChart() {
     rawLaps.forEach((row) => {
       const driver = row.driver_name || row.driver || "Unknown";
       if (!driverMap[driver]) {
+        const code = getDriverCode(driver, row.driver_code);
+        const team =
+          row.team_name ||
+          row.constructor_name ||
+          teamLookup[row.driver_code] ||
+          teamLookup[row.driver_name] ||
+          "";
+        const color = getDriverColor(code, team, season);
+        const teamShort = getTeamShortCode(team, code);
+        const parts = String(driver).trim().split(/\s+/);
+        const lastName = parts[parts.length - 1] || driver;
+
         driverMap[driver] = {
-          code: row.driver_code || driver.substring(0, 3).toUpperCase(),
+          code,
           fullName: driver,
-          team:
-            row.team_name ||
-            row.constructor_name ||
-            teamLookup[row.driver_code] ||
-            teamLookup[row.driver_name] ||
-            "",
+          lastName,
+          team,
+          teamShort,
+          color,
           positions: {},
         };
       }
@@ -115,31 +127,22 @@ export default function LapChart() {
     const labels = Array.from({ length: maxLap }, (_, i) => `L${i + 1}`);
     const drivers = Object.keys(driverMap);
 
-    const usedColors = {};
     const datasets = drivers.map((driverName) => {
       const d = driverMap[driverName];
       const dataPoints = labels.map((_, i) => d.positions[i + 1] ?? null);
       const isVisible = selectedDrivers[driverName] !== false;
 
-      const baseColor = getDriverColor(d.code, d.team, season);
-      let borderDash = [];
-      if (usedColors[baseColor]) {
-        borderDash = [5, 4];
-      } else {
-        usedColors[baseColor] = true;
-      }
-
       return {
-        label: d.code,
+        label: d.team ? `${d.fullName} (${d.team})` : d.fullName,
         data: dataPoints,
-        borderColor: baseColor,
-        backgroundColor: baseColor,
+        borderColor: d.color,
+        backgroundColor: d.color,
         borderWidth: 2.2,
-        borderDash: borderDash,
-        pointRadius: 2,
-        pointHoverRadius: 6,
+        pointRadius: 2.5,
+        pointHoverRadius: 5.5,
         tension: 0.15,
         spanGaps: true,
+        clip: false,
         hidden: !isVisible,
       };
     });
@@ -182,32 +185,52 @@ export default function LapChart() {
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    layout: {
+      padding: {
+        top: 12,
+        right: 12,
+        bottom: 8,
+        left: 4,
+      },
+    },
     interaction: { mode: "index", intersect: false },
     scales: {
       x: {
-        grid: { color: "rgba(255, 255, 255, 0.05)" },
-        ticks: { color: "#8b93a7", font: { family: "Inter", size: 11 } },
+        grid: { color: "rgba(255, 255, 255, 0.04)" },
+        ticks: {
+          color: "#7a7f94",
+          font: { family: "'Titillium Web', sans-serif", size: 11, weight: "600" },
+        },
       },
       y: {
-        reverse: true, // P1 on top
-        min: 1,
-        max: chartData ? chartData.maxPosition + 1 : 22,
-        grid: { color: "rgba(255, 255, 255, 0.05)" },
+        reverse: true,
+        min: 0.5,
+        max: chartData ? chartData.maxPosition + 0.5 : 20.5,
+        afterBuildTicks: (axis) => {
+          const maxPos = chartData ? chartData.maxPosition : 20;
+          axis.ticks = Array.from({ length: maxPos }, (_, i) => ({
+            value: i + 1,
+          }));
+        },
+        grid: { color: "rgba(255, 255, 255, 0.04)" },
         ticks: {
-          color: "#8b93a7",
+          color: "#7a7f94",
+          font: { family: "'Titillium Web', sans-serif", size: 11, weight: "700" },
           stepSize: 1,
-          callback: (val) => `P${val}`,
+          callback: (val) => (Number.isInteger(val) && val >= 1 ? `P${val}` : ""),
         },
       },
     },
     plugins: {
       legend: {
-        labels: {
-          color: "#e0e0ea",
-          font: { family: "Barlow Condensed", size: 12 },
-        },
+        display: false, // Using aligned custom HTML telemetry legend grid
       },
       tooltip: {
+        backgroundColor: "#0e0f15",
+        borderColor: "rgba(255,255,255,0.12)",
+        borderWidth: 1,
+        titleFont: { family: "'Titillium Web', sans-serif", size: 13, weight: "700" },
+        bodyFont: { family: "'Titillium Web', sans-serif", size: 12, weight: "600" },
         callbacks: {
           label: (context) => `${context.dataset.label}: P${context.parsed.y}`,
         },
@@ -215,25 +238,36 @@ export default function LapChart() {
     },
   };
 
+  const applyTopPreset = (count) => {
+    if (!chartData) return;
+    const next = {};
+    chartData.driverNames.forEach((d, idx) => {
+      next[d] = idx < count;
+    });
+    setSelectedDrivers(next);
+  };
+
+  const activeRaceObj =
+    races.find((r) => Number(r.round) === Number(selectedRound)) || {};
+
   return (
     <section id="view-lap-chart-view" className="content-view active">
-      <div className="view-header">
+      <div className="f1-page-header">
         <div>
-          <h2>Lap-by-Lap Race Progression Chart</h2>
-          <p className="text-muted">
-            Interactive track position graph visualizing overtakes, pit stops,
-            and race leader changes across all laps.
-          </p>
+          <span className="page-overline">{season} RACE POSITION TELEMETRY</span>
+          <h2 className="page-main-title">
+            Lap-by-Lap Race Progression Chart
+          </h2>
         </div>
+
         <div className="header-action-group">
-          {/* Round Selector */}
           <F1Select
             id="lapchart-race-select"
             value={selectedRound}
             onChange={(val) => setSelectedRound(Number(val))}
             options={races.map((r) => ({
               value: r.round,
-              label: `Round ${r.round}: ${r.grand_prix_name}`,
+              label: r.grand_prix_name,
             }))}
           />
 
@@ -244,6 +278,7 @@ export default function LapChart() {
           >
             <button
               id="driver-filter-toggle-btn"
+              type="button"
               className="f1-select driver-filter-btn"
               onClick={(e) => {
                 e.stopPropagation();
@@ -251,21 +286,21 @@ export default function LapChart() {
               }}
             >
               <span className="driver-filter-btn-left">
-                <i className="fa-solid fa-users"></i>
                 <span>Drivers ({filterLabel})</span>
               </span>
               <i
                 className="fa-solid fa-chevron-down"
-                style={{ fontSize: "10px", marginLeft: "4px" }}
+                style={{ fontSize: "10px", marginLeft: "6px" }}
               ></i>
             </button>
+
             <div
               className={`driver-filter-menu ${isFilterOpen ? "active" : ""}`}
               id="driver-filter-menu"
               style={{ display: isFilterOpen ? "block" : "none" }}
             >
               <div className="filter-menu-header">
-                <span>Filter Drivers</span>
+                <span>FILTER DRIVERS</span>
                 <div className="filter-actions">
                   <button
                     type="button"
@@ -297,6 +332,7 @@ export default function LapChart() {
                         code={chartData.driverMap[name]?.code}
                         team={chartData.driverMap[name]?.team}
                         season={season}
+                        size={22}
                       />
                     </label>
                   ))}
@@ -306,38 +342,98 @@ export default function LapChart() {
         </div>
       </div>
 
-      <div className="f1-card">
-        <div className="card-header flex-between">
-          <h3 id="lapchart-title">
-            <i className="fa-solid fa-chart-line"></i> Lap-by-Lap Progression (
-            {chartData
-              ? `${season} Round ${selectedRound} • ${chartData.maxLap} Laps • ${chartData.driverNames.length} Drivers`
-              : `P1 - P20`}
-            )
-          </h3>
+      <div className="f1-minimal-panel">
+        <div className="panel-header-bar">
+          <div>
+            <h3 className="panel-title" id="lapchart-title">
+              {activeRaceObj.grand_prix_name || `Round ${selectedRound}`} —
+              Position Trace
+            </h3>
+            <p className="panel-subtitle">
+              {chartData
+                ? `${season} Round ${selectedRound} • ${chartData.maxLap} Laps • ${chartData.driverNames.length} Classified Drivers`
+                : "P1 to P20 Track Position History"}
+            </p>
+          </div>
+          {chartData && (
+            <div className="filter-actions">
+              <button
+                type="button"
+                className="f1-row-action-btn"
+                onClick={() => applyTopPreset(5)}
+              >
+                Top 5
+              </button>
+              <button
+                type="button"
+                className="f1-row-action-btn"
+                onClick={() => applyTopPreset(10)}
+              >
+                Top 10
+              </button>
+              <button
+                type="button"
+                className="f1-row-action-btn"
+                onClick={() => setAllDrivers(true)}
+              >
+                Show All
+              </button>
+              <button
+                type="button"
+                className="f1-row-action-btn"
+                onClick={() => setAllDrivers(false)}
+              >
+                Hide All
+              </button>
+            </div>
+          )}
         </div>
-        <div className="card-body">
+
+        <div className="p-3">
           {isLoading ? (
-            <div
-              className="text-center py-5 text-muted"
-              style={{
-                padding: "2rem 1rem",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "14px",
-              }}
-            >
+            <div className="f1-loading-state">
               <i className="fa-solid fa-spinner fa-spin fa-2x"></i>
-              <p className="mt-2">Loading Lap Chart...</p>
+              <p>Loading lap-by-lap telemetry...</p>
             </div>
           ) : chartData && chartData.datasets.length > 0 ? (
-            <div className="chart-wrapper">
-              <Line data={chartData} options={chartOptions} />
+            <div className="f1-telemetry-chart-block">
+              <div className="f1-chart-legend-grid">
+                {chartData.driverNames.map((name) => {
+                  const d = chartData.driverMap[name];
+                  const active = selectedDrivers[name] !== false;
+                  return (
+                    <button
+                      key={name}
+                      type="button"
+                      className={`f1-chart-legend-chip ${active ? "active" : "muted"}`}
+                      onClick={() => toggleDriver(name)}
+                      title={`${d.fullName}${d.team ? ` — ${d.team}` : ""}`}
+                    >
+                      <span
+                        className="legend-chip-color-bar"
+                        style={{ backgroundColor: d.color }}
+                      />
+                      <span className="legend-chip-code">{d.code}</span>
+                      <span className="legend-chip-name">{d.lastName}</span>
+                      {d.teamShort && (
+                        <span
+                          className="legend-chip-team"
+                          style={{ color: d.color }}
+                        >
+                          {d.teamShort}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="chart-wrapper" style={{ height: "540px" }}>
+                <Line data={chartData} options={chartOptions} />
+              </div>
             </div>
           ) : (
-            <div className="p-5 text-center text-muted">
+            <div className="f1-empty-state">
               No lap progression data available for this round.
             </div>
           )}

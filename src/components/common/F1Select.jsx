@@ -76,9 +76,6 @@ export default function F1Select({
                 onClick={() => handleSelect(opt.value)}
               >
                 <span>{opt.label}</span>
-                {isSelected && (
-                  <i className="fa-solid fa-check" style={{ fontSize: "10px", color: "var(--f1-red)" }} />
-                )}
               </div>
             );
           })}

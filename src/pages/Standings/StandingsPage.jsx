@@ -1,75 +1,171 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSeason } from "../../context/SeasonContext";
-import { F1Api } from "../../api/client";
+import { F1Api, toArray } from "../../api/client";
 import WikiLink from "../../components/common/WikiLink";
 import DriverBadge from "../../components/common/DriverBadge";
-import { CountryFlag } from "../../utils/flags";
+import TeamBadge from "../../components/common/TeamBadge";
+import { CountryFlag, getCountryThreeLetterCode } from "../../utils/flags";
 import { useTableSort } from "../../utils/useTableSort";
+import {
+  DEFAULT_CAR_SILHOUETTE,
+  DEFAULT_DRIVER_SILHOUETTE,
+  getDriverHeadshot,
+  getTeamLogo,
+  getCarLivery,
+  getTeamCardGradient,
+  resolveDriverCode,
+} from "../../utils/f1Assets";
 
-const CURRENT_REAL_YEAR = new Date().getFullYear();
+function DriverPodiumCard({ driver, rank, season }) {
+  const [imgFailed, setImgFailed] = useState(false);
+  if (!driver) return null;
+
+  const headshot = getDriverHeadshot(driver.driver_name, driver.driver_code, season);
+  const resolvedHeadshot = imgFailed ? DEFAULT_DRIVER_SILHOUETTE : headshot;
+  const code = resolveDriverCode(driver.driver_name, driver.driver_code);
+  const theme = getTeamCardGradient(driver.team_name);
+
+  const parts = String(driver.driver_name || "").trim().split(/\s+/);
+  const firstName = parts.length > 1 ? parts.slice(0, -1).join(" ") : "";
+  const lastName =
+    parts.length > 1 ? parts[parts.length - 1] : driver.driver_name;
+
+  return (
+    <div
+      className="podium-feature-card f1-halftone-card"
+      style={{
+        background: theme.gradient,
+        borderColor: `${theme.baseColor}55`,
+      }}
+    >
+      <div className="podium-card-left">
+        <div className="podium-top-meta">
+          <span className="podium-pos-label">P{rank}</span>
+          <span className="podium-pts-pill">
+            {driver.total_points ?? 0} <small>PTS</small>
+          </span>
+        </div>
+
+        <div className="podium-driver-names">
+          {firstName && <span className="podium-first-name">{firstName}</span>}
+          <h3 className="podium-last-name">
+            <WikiLink text={lastName} url={driver.driver_wiki_url} />
+          </h3>
+        </div>
+
+        <span className="podium-team-name">{driver.team_name || "-"}</span>
+
+        <div className="podium-bottom-meta">
+          <CountryFlag name={driver.nationality} size={22} />
+          <span className="podium-wins-tag">
+            {driver.total_wins ?? 0} Wins
+          </span>
+        </div>
+      </div>
+
+      <div className="podium-card-right">
+        <img
+          src={resolvedHeadshot}
+          alt={driver.driver_name}
+          className="podium-driver-cutout"
+          onError={() => {
+            if (!imgFailed) setImgFailed(true);
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ConstructorPodiumCard({ constructorItem, rank, season }) {
+  const [carFailed, setCarFailed] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
+  if (!constructorItem) return null;
+
+  const carUrl = getCarLivery(season, constructorItem.constructor_name);
+  const resolvedCarUrl = carFailed ? DEFAULT_CAR_SILHOUETTE : carUrl;
+  const logoUrl = getTeamLogo(constructorItem.constructor_name, season);
+  const theme = getTeamCardGradient(constructorItem.constructor_name);
+
+  return (
+    <div
+      className="podium-feature-card constructor-podium-card f1-halftone-card"
+      style={{
+        background: theme.gradient,
+        borderColor: `${theme.baseColor}55`,
+      }}
+    >
+      <div className="podium-constructor-header">
+        <div>
+          <div className="podium-top-meta">
+            <span className="podium-pos-label">P{rank}</span>
+            <span className="podium-pts-pill">
+              {constructorItem.total_points ?? 0} <small>PTS</small>
+            </span>
+            <span className="podium-wins-tag">
+              {constructorItem.total_wins ?? 0} Wins
+            </span>
+          </div>
+          <h3 className="podium-last-name mt-1">
+            <WikiLink
+              text={constructorItem.constructor_name}
+              url={constructorItem.constructor_wiki_url}
+            />
+          </h3>
+        </div>
+
+        {logoUrl && !logoFailed && (
+          <span className="constructor-logo-disc">
+            <img
+              src={logoUrl}
+              alt={constructorItem.constructor_name}
+              onError={() => setLogoFailed(true)}
+            />
+          </span>
+        )}
+      </div>
+
+      <div className="podium-car-wrap">
+        <img
+          src={resolvedCarUrl}
+          alt={constructorItem.constructor_name}
+          className="podium-car-img"
+          onError={() => {
+            if (!carFailed) setCarFailed(true);
+          }}
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function StandingsPage() {
   const { season } = useSeason();
   const [tab, setTab] = useState("drivers"); // 'drivers' | 'constructors'
 
-  const { data: drivers = [], isLoading: loadingDrivers } = useQuery({
+  const { data: driversData = [], isLoading: loadingDrivers } = useQuery({
     queryKey: ["driverStandings", season],
     queryFn: async () => {
       const res = await F1Api.getDriverStandingsByYear(season);
-      return res?.data || res || [];
+      return toArray(res);
     },
     enabled: tab === "drivers",
   });
 
-  const { data: constructors = [], isLoading: loadingConstructors } = useQuery({
+  const { data: constructorsData = [], isLoading: loadingConstructors } = useQuery({
     queryKey: ["constructorStandings", season],
     queryFn: async () => {
       const res = await F1Api.getConstructorStandingsByYear(season);
-      return res?.data || res || [];
+      return toArray(res);
     },
     enabled: tab === "constructors",
   });
 
-  // Fetch race calendar to calculate remaining races for the champion math
-  const { data: calendar = [] } = useQuery({
-    queryKey: ["raceCalendar", season],
-    queryFn: async () => {
-      const res = await F1Api.getRaceCalendar(season);
-      return res?.data || res || [];
-    },
-  });
+  const drivers = Array.isArray(driversData) ? driversData : [];
+  const constructors = Array.isArray(constructorsData) ? constructorsData : [];
 
   const isLoading = tab === "drivers" ? loadingDrivers : loadingConstructors;
-
-  // --- Champion clinch logic ---
-  const isHistoricalSeason = Number(season) < CURRENT_REAL_YEAR;
-  const MAX_PTS_PER_RACE = 26; // 25 (win) + 1 (fastest lap)
-
-  const todayStr = new Date().toISOString().split("T")[0];
-  const remainingRaces = calendar.filter(
-    (r) => r.race_date && r.race_date > todayStr,
-  ).length;
-
-  // Driver champion: sort by points, check if P1 gap over P2 > remaining max
-  const driversByPts = [...drivers].sort(
-    (a, b) => (b.total_points ?? 0) - (a.total_points ?? 0),
-  );
-  const driverLeaderPts = driversByPts[0]?.total_points ?? 0;
-  const driverSecondPts = driversByPts[1]?.total_points ?? 0;
-  const driverGap = driverLeaderPts - driverSecondPts;
-  const driverChampionClinched =
-    isHistoricalSeason || driverGap > remainingRaces * MAX_PTS_PER_RACE;
-
-  // Constructor champion: same logic
-  const consByPts = [...constructors].sort(
-    (a, b) => (b.total_points ?? 0) - (a.total_points ?? 0),
-  );
-  const consLeaderPts = consByPts[0]?.total_points ?? 0;
-  const consSecondPts = consByPts[1]?.total_points ?? 0;
-  const consGap = consLeaderPts - consSecondPts;
-  const constructorChampionClinched =
-    isHistoricalSeason || consGap > remainingRaces * MAX_PTS_PER_RACE;
 
   const {
     sortedData: sortedDrivers,
@@ -85,84 +181,80 @@ export default function StandingsPage() {
     requestSort: cRequestSort,
   } = useTableSort(constructors, "championship_rank");
 
+  const top3Drivers = [...drivers]
+    .sort((a, b) => (a.championship_rank ?? 99) - (b.championship_rank ?? 99))
+    .slice(0, 3);
+
+  const top3Constructors = [...constructors]
+    .sort((a, b) => (a.championship_rank ?? 99) - (b.championship_rank ?? 99))
+    .slice(0, 3);
+
   return (
     <section id="view-standings" className="content-view active">
-      <div className="view-header">
+      <div className="f1-page-header">
         <div>
-          <h2>Championship Standings</h2>
-          <p className="text-muted">
-            Live and historical Driver & Constructor Championship standings with
-            points, wins, and team affiliations for{" "}
-            <span className="current-season-display">{season} Season</span>.
-            {(isHistoricalSeason ||
-              driverChampionClinched ||
-              constructorChampionClinched) && (
-              <span
-                style={{
-                  marginLeft: "8px",
-                  color: "#ffb800",
-                  fontSize: "12px",
-                  fontWeight: 700,
-                }}
-              >
-                <i className="fa-solid fa-crown"></i> Gold = Champion
-              </span>
-            )}
-          </p>
+          <span className="page-overline">{season} FIA FORMULA ONE WORLD CHAMPIONSHIP</span>
+          <h2 className="page-main-title">Championship Standings</h2>
         </div>
-        <div className="header-action-group">
-          <div className="btn-group">
-            <button
-              id="btn-standings-drivers"
-              className={`btn btn-tab ${tab === "drivers" ? "active" : ""}`}
-              onClick={() => setTab("drivers")}
-            >
-              Drivers Standings
-            </button>
-            <button
-              id="btn-standings-constructors"
-              className={`btn btn-tab ${tab === "constructors" ? "active" : ""}`}
-              onClick={() => setTab("constructors")}
-            >
-              Constructors Standings
-            </button>
-          </div>
+
+        <div className="f1-segmented-tabs">
+          <button
+            id="btn-standings-drivers"
+            type="button"
+            className={`seg-tab-btn ${tab === "drivers" ? "active" : ""}`}
+            onClick={() => setTab("drivers")}
+          >
+            Drivers
+          </button>
+          <button
+            id="btn-standings-constructors"
+            type="button"
+            className={`seg-tab-btn ${tab === "constructors" ? "active" : ""}`}
+            onClick={() => setTab("constructors")}
+          >
+            Constructors
+          </button>
         </div>
       </div>
 
-      <div className="f1-card">
-        <div className="card-header flex-between">
-          <h3 id="standings-table-title">
-            <i
-              className={`fa-solid ${tab === "drivers" ? "fa-trophy" : "fa-car"}`}
-            ></i>{" "}
-            {tab === "drivers"
-              ? "World Drivers Championship (WDC)"
-              : "World Constructors Championship (WCC)"}
-          </h3>
-          <span id="standings-season-badge" className="badge badge-f1">
-            Season {season}
-          </span>
+      {isLoading ? (
+        <div className="f1-loading-state">
+          <i className="fa-solid fa-spinner fa-spin fa-2x"></i>
+          <p>Loading {season} standings...</p>
         </div>
-        <div className="card-body p-0">
-          {isLoading ? (
-            <div
-              className="text-center py-5 text-muted"
-              style={{
-                padding: "2rem 1rem",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "14px",
-              }}
-            >
-              <i className="fa-solid fa-spinner fa-spin fa-2x"></i>
-              <p className="mt-2">Loading standings for {season}...</p>
+      ) : (
+        <>
+          {/* TOP 3 PODIUM FEATURE CARDS */}
+          {tab === "drivers" && top3Drivers.length > 0 && (
+            <div className="standings-podium-grid">
+              {top3Drivers.map((d, idx) => (
+                <DriverPodiumCard
+                  key={`${season}-${d.driver_code || d.driver_name}`}
+                  driver={d}
+                  rank={d.championship_rank ?? idx + 1}
+                  season={season}
+                />
+              ))}
             </div>
-          ) : (
+          )}
+
+          {tab === "constructors" && top3Constructors.length > 0 && (
+            <div className="standings-podium-grid">
+              {top3Constructors.map((c, idx) => (
+                <ConstructorPodiumCard
+                  key={`${season}-${c.constructor_name}`}
+                  constructorItem={c}
+                  rank={c.championship_rank ?? idx + 1}
+                  season={season}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* MINIMALIST STANDINGS TABLE (Reference 2 Aesthetic) */}
+          <div className="f1-minimal-panel">
             <div className="table-responsive">
-              <table className="f1-table" id="standings-main-table">
+              <table className="f1-minimal-table" id="standings-main-table">
                 {tab === "drivers" ? (
                   <>
                     <thead>
@@ -175,7 +267,7 @@ export default function StandingsPage() {
                           }
                           onClick={() => dRequestSort("championship_rank")}
                         >
-                          Pos <span className="sort-icon"></span>
+                          POS. <span className="sort-icon"></span>
                         </th>
                         <th
                           className={
@@ -185,7 +277,7 @@ export default function StandingsPage() {
                           }
                           onClick={() => dRequestSort("driver_name")}
                         >
-                          Driver <span className="sort-icon"></span>
+                          DRIVER <span className="sort-icon"></span>
                         </th>
                         <th
                           className={
@@ -195,7 +287,7 @@ export default function StandingsPage() {
                           }
                           onClick={() => dRequestSort("nationality")}
                         >
-                          Nationality <span className="sort-icon"></span>
+                          NATIONALITY <span className="sort-icon"></span>
                         </th>
                         <th
                           className={
@@ -205,7 +297,7 @@ export default function StandingsPage() {
                           }
                           onClick={() => dRequestSort("team_name")}
                         >
-                          Team / Constructor <span className="sort-icon"></span>
+                          TEAM <span className="sort-icon"></span>
                         </th>
                         <th
                           className={
@@ -215,13 +307,17 @@ export default function StandingsPage() {
                           }
                           onClick={() => dRequestSort("total_wins")}
                         >
-                          Wins <span className="sort-icon"></span>
+                          WINS <span className="sort-icon"></span>
                         </th>
                         <th
-                          className={`text-right ${dSortKey === "total_points" ? `sort-${dSortDir}` : "sortable"}`}
+                          className={`text-right ${
+                            dSortKey === "total_points"
+                              ? `sort-${dSortDir}`
+                              : "sortable"
+                          }`}
                           onClick={() => dRequestSort("total_points")}
                         >
-                          Total Points <span className="sort-icon"></span>
+                          PTS. <span className="sort-icon"></span>
                         </th>
                       </tr>
                     </thead>
@@ -229,26 +325,9 @@ export default function StandingsPage() {
                       {sortedDrivers.length > 0 ? (
                         sortedDrivers.map((d, i) => {
                           const rank = d.championship_rank ?? i + 1;
-                          const isChampion =
-                            rank === 1 && driverChampionClinched;
-
                           return (
-                            <tr
-                              key={d.driver_code || d.driver_name || i}
-                              className={isChampion ? "row-champion-wdc" : ""}
-                            >
-                              <td className={`pos-${rank}`}>
-                                <strong>P{rank}</strong>
-                                {isChampion && (
-                                  <span
-                                    className="badge-champion"
-                                    style={{ marginLeft: "6px" }}
-                                    title="World Drivers Champion"
-                                  >
-                                    <i className="fa-solid fa-crown"></i> WDC
-                                  </span>
-                                )}
-                              </td>
+                            <tr key={d.driver_code || d.driver_name || i}>
+                              <td className="cell-pos">{rank}</td>
                               <td>
                                 <DriverBadge
                                   name={d.driver_name}
@@ -256,28 +335,27 @@ export default function StandingsPage() {
                                   team={d.team_name}
                                   season={season}
                                   wikiUrl={d.driver_wiki_url}
-                                  // isHistorical={isHistoricalDriver}
                                 />
                               </td>
-                              <td>
-                                <CountryFlag name={d.nationality} />
-                                <span>{d.nationality || "-"}</span>
+                              <td className="cell-nation">
+                                <span
+                                  className="nation-code-text"
+                                  title={d.nationality}
+                                >
+                                  {getCountryThreeLetterCode(d.nationality)}
+                                </span>
                               </td>
                               <td>
-                                <WikiLink
-                                  text={d.team_name}
-                                  url={d.constructor_wiki_url}
+                                <TeamBadge
+                                  name={d.team_name}
+                                  season={season}
+                                  wikiUrl={d.constructor_wiki_url}
                                 />
                               </td>
-                              <td>{d.total_wins ?? 0}</td>
-                              <td
-                                className="text-right font-weight-bold"
-                                style={{
-                                  fontFamily: "var(--font-mono)",
-                                  fontSize: "14px",
-                                  color: isChampion ? "#ffb800" : undefined,
-                                }}
-                              >
+                              <td className="cell-tabular">
+                                {d.total_wins ?? 0}
+                              </td>
+                              <td className="cell-points text-right">
                                 {d.total_points ?? 0}
                               </td>
                             </tr>
@@ -285,10 +363,7 @@ export default function StandingsPage() {
                         })
                       ) : (
                         <tr>
-                          <td
-                            colSpan="6"
-                            className="text-center py-4 text-muted"
-                          >
+                          <td colSpan="6" className="table-state-cell">
                             No driver standings recorded for season {season}.
                           </td>
                         </tr>
@@ -307,7 +382,7 @@ export default function StandingsPage() {
                           }
                           onClick={() => cRequestSort("championship_rank")}
                         >
-                          Pos <span className="sort-icon"></span>
+                          POS. <span className="sort-icon"></span>
                         </th>
                         <th
                           className={
@@ -317,7 +392,7 @@ export default function StandingsPage() {
                           }
                           onClick={() => cRequestSort("constructor_name")}
                         >
-                          Constructor Team <span className="sort-icon"></span>
+                          TEAM <span className="sort-icon"></span>
                         </th>
                         <th
                           className={
@@ -327,7 +402,7 @@ export default function StandingsPage() {
                           }
                           onClick={() => cRequestSort("nationality")}
                         >
-                          Nationality <span className="sort-icon"></span>
+                          NATIONALITY <span className="sort-icon"></span>
                         </th>
                         <th
                           className={
@@ -337,13 +412,17 @@ export default function StandingsPage() {
                           }
                           onClick={() => cRequestSort("total_wins")}
                         >
-                          Wins <span className="sort-icon"></span>
+                          WINS <span className="sort-icon"></span>
                         </th>
                         <th
-                          className={`text-right ${cSortKey === "total_points" ? `sort-${cSortDir}` : "sortable"}`}
+                          className={`text-right ${
+                            cSortKey === "total_points"
+                              ? `sort-${cSortDir}`
+                              : "sortable"
+                          }`}
                           onClick={() => cRequestSort("total_points")}
                         >
-                          Total Points <span className="sort-icon"></span>
+                          PTS. <span className="sort-icon"></span>
                         </th>
                       </tr>
                     </thead>
@@ -351,45 +430,28 @@ export default function StandingsPage() {
                       {sortedConstructors.length > 0 ? (
                         sortedConstructors.map((c, i) => {
                           const rank = c.championship_rank ?? i + 1;
-                          const isChampion =
-                            rank === 1 && constructorChampionClinched;
-
                           return (
-                            <tr
-                              key={c.constructor_name || i}
-                              className={isChampion ? "row-champion-wcc" : ""}
-                            >
-                              <td className={`pos-${rank}`}>
-                                <strong>P{rank}</strong>
-                                {isChampion && (
-                                  <span
-                                    className="badge-champion"
-                                    style={{ marginLeft: "6px" }}
-                                    title="World Constructors Champion"
-                                  >
-                                    <i className="fa-solid fa-crown"></i> WCC
-                                  </span>
-                                )}
-                              </td>
+                            <tr key={c.constructor_name || i}>
+                              <td className="cell-pos">{rank}</td>
                               <td>
-                                <WikiLink
-                                  text={c.constructor_name}
-                                  url={c.constructor_wiki_url}
+                                <TeamBadge
+                                  name={c.constructor_name}
+                                  season={season}
+                                  wikiUrl={c.constructor_wiki_url}
                                 />
                               </td>
-                              <td>
-                                <CountryFlag name={c.nationality} />
-                                <span>{c.nationality || "-"}</span>
+                              <td className="cell-nation">
+                                <span
+                                  className="nation-code-text"
+                                  title={c.nationality}
+                                >
+                                  {getCountryThreeLetterCode(c.nationality)}
+                                </span>
                               </td>
-                              <td>{c.total_wins ?? 0}</td>
-                              <td
-                                className="text-right font-weight-bold"
-                                style={{
-                                  fontFamily: "var(--font-mono)",
-                                  fontSize: "14px",
-                                  color: isChampion ? "#ffb800" : undefined,
-                                }}
-                              >
+                              <td className="cell-tabular">
+                                {c.total_wins ?? 0}
+                              </td>
+                              <td className="cell-points text-right">
                                 {c.total_points ?? 0}
                               </td>
                             </tr>
@@ -397,10 +459,7 @@ export default function StandingsPage() {
                         })
                       ) : (
                         <tr>
-                          <td
-                            colSpan="5"
-                            className="text-center py-4 text-muted"
-                          >
+                          <td colSpan="5" className="table-state-cell">
                             No constructor standings recorded for season{" "}
                             {season}.
                           </td>
@@ -411,9 +470,9 @@ export default function StandingsPage() {
                 )}
               </table>
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        </>
+      )}
     </section>
   );
 }

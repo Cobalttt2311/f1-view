@@ -14,7 +14,7 @@ export const TEAM_COLORS = {
   haas: "#B6BABD",
   haas_f1_team: "#B6BABD",
   audi: "#E0002B",
-  cadillac: "#D9DDE2",
+  cadillac: "#262B36",
   racing_bulls: "#6692FF",
   rb: "#6692FF",
   rb_f1_team: "#6692FF",
@@ -257,8 +257,11 @@ export const ACTIVE_DRIVER_TEAMS = {
   STR: "aston_martin",
   GAS: "alpine",
   COL: "alpine", // 2026
+  DOO: "alpine",
   BEA: "haas", // 2026
   OCO: "haas", // 2026
+  HIR: "haas",
+  CAM: "haas",
   ALB: "williams",
   SAI: "williams", // 2026
   LIN: "racing_bulls", // 2026 (Lindblad)
@@ -269,6 +272,49 @@ export const ACTIVE_DRIVER_TEAMS = {
   BOT: "cadillac", // 2026
   PER: "cadillac", // 2026
 };
+
+export const TEAM_SHORT_CODES = {
+  ferrari: "FER",
+  mercedes: "MER",
+  red_bull: "RBR",
+  redbull: "RBR",
+  mclaren: "MCL",
+  aston_martin: "AMR",
+  alpine: "ALP",
+  williams: "WIL",
+  haas: "HAA",
+  audi: "AUD",
+  cadillac: "CAD",
+  racing_bulls: "RB",
+  rb: "RB",
+  sauber: "SAU",
+  kick_sauber: "SAU",
+  alfa_romeo: "ALF",
+  alphatauri: "AT",
+  alpha_tauri: "AT",
+  toro_rosso: "STR",
+  renault: "REN",
+  racing_point: "RP",
+  force_india: "FI",
+};
+
+export function getTeamShortCode(teamName = "", driverCode = "") {
+  if (teamName) {
+    const clean = String(teamName)
+      .toLowerCase()
+      .replace(/[\s-]+/g, "_");
+    for (const [key, short] of Object.entries(TEAM_SHORT_CODES)) {
+      if (clean.includes(key)) return short;
+    }
+    return String(teamName).substring(0, 3).toUpperCase();
+  }
+  const code = String(driverCode || "").toUpperCase();
+  if (ACTIVE_DRIVER_TEAMS[code]) {
+    const tk = ACTIVE_DRIVER_TEAMS[code];
+    return TEAM_SHORT_CODES[tk] || tk.substring(0, 3).toUpperCase();
+  }
+  return "";
+}
 
 export function getTeamColor(teamName = "") {
   if (!teamName) return TEAM_COLORS.default;
@@ -282,8 +328,9 @@ export function getTeamColor(teamName = "") {
 }
 
 export function getDriverCode(driverName = "", code = "") {
-  if (code && String(code).trim().length >= 2) {
-    return String(code).trim().toUpperCase();
+  const cleanCode = code ? String(code).trim() : "";
+  if (cleanCode && cleanCode !== "\\N" && cleanCode.length >= 2) {
+    return cleanCode.toUpperCase();
   }
   if (!driverName) return "DRV";
   const parts = String(driverName).trim().split(/\s+/);

@@ -9,29 +9,25 @@ export default function Pagination({
   if (totalPages <= 1) return null;
 
   return (
-    <div
-      className="card-footer pagination-footer"
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "12px",
-      }}
-    >
-      <span className="text-muted">
-        Page <strong>{page}</strong> of <strong>{totalPages}</strong> (
-        {totalItems} records)
+    <div className="f1-pagination-bar">
+      <span className="pagination-meta">
+        Page <strong>{page}</strong> of <strong>{totalPages}</strong>
+        {typeof totalItems === "number" && (
+          <span className="pagination-total-dot"> • {totalItems} records</span>
+        )}
       </span>
-      <div className="btn-group">
+      <div className="pagination-actions">
         <button
-          className="btn btn-sm btn-outline"
+          type="button"
+          className="pagination-nav-btn"
           disabled={page === 1}
           onClick={() => onPageChange(page - 1)}
         >
           <i className="fa-solid fa-chevron-left"></i> Prev
         </button>
         <button
-          className="btn btn-sm btn-outline"
+          type="button"
+          className="pagination-nav-btn"
           disabled={page === totalPages}
           onClick={() => onPageChange(page + 1)}
         >
