@@ -6,17 +6,19 @@
 
 **Tifosi** is Formula 1 web application and telemetry dashboard. It provides comprehensive race analytics, live session schedules, historical championship archives (1950 – present), and interactive lap progression charts powered by an asynchronous RESTful API.
 
+🌐 **Live Web Dashboard**: [Tifosi - Telemetry & Information for Formula One Statistics & Insights](https://f1-view-nine.vercel.app/dashboard)
+
 ---
 
 ## 🔗 Related Repositories & Ecosystem
 
 This web application is the frontend client in the complete **Formula 1 End-to-End Analytics Platform**:
 
-| Component                                   | Repository                                                                | Description                                                                |
-| :------------------------------------------ | :------------------------------------------------------------------------ | :------------------------------------------------------------------------- |
-| **🏎️ Frontend Web App (This Repo)** | [`f1-view`](https://github.com/Cobalttt2311/f1-view)                     | Interactive motorsport dashboard built with Vanilla JS & Chart.js          |
-| **⚡ Backend REST API**               | [**`f1-api`**](https://github.com/Cobalttt2311/f1-api)             | High-performance FastAPI service connected to PostgreSQL                   |
-| **🔄 Data Pipeline (ETL)**            | [**`f1-race-data`**](https://github.com/Cobalttt2311/f1-race-data) | Automated Kaggle-to-PostgreSQL data ingestion and synchronization pipeline |
+| Component                                   | Repository / Live Link                                                                | Description                                                                |
+| :------------------------------------------ | :------------------------------------------------------------------------------------ | :------------------------------------------------------------------------- |
+| **🏎️ Frontend Web App (This Repo)**         | [`f1-view`](https://github.com/Cobalttt2311/f1-view) • [Live Dashboard](https://f1-view-nine.vercel.app/dashboard) | Interactive motorsport dashboard built with React & Chart.js               |
+| **⚡ Backend REST API**                       | [**`f1-api`**](https://github.com/Cobalttt2311/f1-api)                                 | High-performance FastAPI service connected to PostgreSQL                   |
+| **🔄 Data Pipeline (ETL)**                    | [**`f1-race-data`**](https://github.com/Cobalttt2311/f1-race-data)                     | Automated Kaggle-to-PostgreSQL data ingestion and synchronization pipeline |
 
 ---
 
@@ -197,6 +199,7 @@ f1-view/
 ## 📄 License & Credits
 
 * **Data Source**: [Formula 1 Race Data by James Trotman](https://www.kaggle.com/datasets/jtrotman/formula-1-race-data) on Kaggle.
+* **Live Dashboard**: [Tifosi - Telemetry & Information for Formula One Statistics & Insights](https://f1-view-nine.vercel.app/dashboard)
 * **License**: This project is developed for educational and portfolio demonstration purposes.
 
 Made with ❤️ by [Cobalt](https://github.com/Cobalttt2311) and [Saga](https://github.com/basganajaah)

@@ -1,11 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 
 export const NATIONALITY_AND_COUNTRY_TO_ISO = {
-  // Nationalities
   british: "gb",
   english: "gb",
   scottish: "gb",
   welsh: "gb",
+  uk: "gb",
+  "great britain": "gb",
   dutch: "nl",
   netherlands: "nl",
   monégasque: "mc",
@@ -98,9 +99,57 @@ export const NATIONALITY_AND_COUNTRY_TO_ISO = {
   korea: "kr",
   "south korea": "kr",
   korean: "kr",
-  uk: "gb",
-  "great britain": "gb",
 };
+
+const ISO_TO_THREE_LETTER = {
+  gb: "GBR",
+  nl: "NED",
+  mc: "MON",
+  es: "ESP",
+  mx: "MEX",
+  au: "AUS",
+  de: "GER",
+  fr: "FRA",
+  ca: "CAN",
+  jp: "JPN",
+  fi: "FIN",
+  dk: "DEN",
+  th: "THA",
+  cn: "CHN",
+  us: "USA",
+  br: "BRA",
+  at: "AUT",
+  ch: "SUI",
+  nz: "NZL",
+  be: "BEL",
+  za: "RSA",
+  ar: "ARG",
+  pl: "POL",
+  se: "SWE",
+  ru: "RUS",
+  in: "IND",
+  ie: "IRL",
+  co: "COL",
+  ve: "VEN",
+  pt: "POR",
+  hu: "HUN",
+  id: "INA",
+  my: "MAS",
+  it: "ITA",
+  bh: "BHR",
+  sa: "KSA",
+  qa: "QAT",
+  ae: "UAE",
+  az: "AZE",
+  sg: "SGP",
+  tr: "TUR",
+};
+
+const LOCAL_FLAGS = new Set([
+  "nl", "gb", "mc", "es", "au", "mx", "de", "fr", "th", "ca",
+  "us", "ar", "fi", "jp", "nz", "cn", "dk", "it", "be", "at",
+  "hu", "sg", "az", "qa", "sa", "ae", "br", "bh", "pt", "tr", "ru",
+]);
 
 export function getCountryIso(countryOrNationality = "") {
   if (!countryOrNationality) return null;
@@ -113,7 +162,6 @@ export function getCountryIso(countryOrNationality = "") {
     return NATIONALITY_AND_COUNTRY_TO_ISO[clean];
   }
 
-  // Partial match check
   for (const [key, iso] of Object.entries(NATIONALITY_AND_COUNTRY_TO_ISO)) {
     if (clean.includes(key) || key.includes(clean)) {
       return iso;
@@ -123,33 +171,59 @@ export function getCountryIso(countryOrNationality = "") {
   return null;
 }
 
-export function CountryFlag({ name = "", className = "", style = {} }) {
+export function getCountryThreeLetterCode(countryOrNationality = "") {
+  const iso = getCountryIso(countryOrNationality);
+  if (iso && ISO_TO_THREE_LETTER[iso]) return ISO_TO_THREE_LETTER[iso];
+  if (!countryOrNationality) return "-";
+  return String(countryOrNationality).substring(0, 3).toUpperCase();
+}
+
+export function CountryFlag({
+  name = "",
+  className = "",
+  circle = true,
+  size = 18,
+  style = {},
+}) {
   const iso = getCountryIso(name);
-  if (!iso) return null;
+  const [failedLocal, setFailedLocal] = useState(false);
+  const [failedAll, setFailedAll] = useState(false);
+
+  if (!iso || failedAll) return null;
+
+  const useLocal = LOCAL_FLAGS.has(iso) && !failedLocal;
+  const src = useLocal
+    ? `/assets/flags/${iso}.svg`
+    : `https://flagcdn.com/w40/${iso}.png`;
 
   return (
     <img
-      src={`https://flagcdn.com/w20/${iso}.png`}
-      srcSet={`https://flagcdn.com/w40/${iso}.png 2x`}
-      width="18"
-      height="12"
+      src={src}
+      width={size}
+      height={circle ? size : Math.round(size * 0.68)}
       alt={name || iso}
-      className={`country-flag-icon ${className}`}
+      className={`country-flag-icon ${circle ? "flag-circle" : ""} ${className}`}
       style={{
-        verticalAlign: "middle",
-        marginRight: "6px",
-        borderRadius: "2px",
+        width: `${size}px`,
+        height: circle ? `${size}px` : `${Math.round(size * 0.68)}px`,
+        borderRadius: circle ? "50%" : "2px",
         objectFit: "cover",
+        verticalAlign: "middle",
+        marginRight: "8px",
         display: "inline-block",
-        boxShadow: "0 1px 2px rgba(0,0,0,0.3)",
+        flexShrink: 0,
+        border: "1px solid rgba(255, 255, 255, 0.14)",
         ...style,
       }}
-      onError={(e) => {
-        e.currentTarget.style.display = "none";
+      onError={() => {
+        if (useLocal) {
+          setFailedLocal(true);
+        } else {
+          setFailedAll(true);
+        }
       }}
     />
   );
 }
 
 export default CountryFlag;
-

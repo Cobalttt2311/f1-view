@@ -1,215 +1,380 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useSeason } from '../../context/SeasonContext';
-import { F1Api } from '../../api/client';
-import DriverFormChart from '../../components/charts/DriverFormChart';
-import PointsProgressionChart from '../../components/charts/PointsProgressionChart';
-import WikiLink from '../../components/common/WikiLink';
-import { CountryFlag } from '../../utils/flags';
-import DriverBadge from '../../components/common/DriverBadge';
-import { useTableSort } from '../../utils/useTableSort';
-import F1Select from '../../components/common/F1Select';
+import React, { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useSeason } from "../../context/SeasonContext";
+import { F1Api, toArray } from "../../api/client";
+import DriverFormChart from "../../components/charts/DriverFormChart";
+import PointsProgressionChart from "../../components/charts/PointsProgressionChart";
+import WikiLink from "../../components/common/WikiLink";
+import { CountryFlag } from "../../utils/flags";
+import DriverBadge from "../../components/common/DriverBadge";
+import TeamBadge from "../../components/common/TeamBadge";
+import { useTableSort } from "../../utils/useTableSort";
+import F1Select from "../../components/common/F1Select";
+import { getTeamColor } from "../../utils/teamColors";
 
 export default function AnalyticsPage() {
   const { season } = useSeason();
-  const [category, setCategory] = useState('seasonal'); // 'seasonal' | 'historical'
-  const [seasonalMetric, setSeasonalMetric] = useState('biggest-movers');
-  const [historicalMetric, setHistoricalMetric] = useState('pole-to-win');
+  const [category, setCategory] = useState("seasonal");
+  const [seasonalMetric, setSeasonalMetric] = useState("biggest-movers");
+  const [historicalMetric, setHistoricalMetric] = useState("pole-to-win");
 
-  // Query Seasonal Metrics
-  const { data: seasonalData, isLoading: loadingSeasonal } = useQuery({
-    queryKey: ['seasonalAnalytics', season, seasonalMetric],
+  const { data: seasonalData = [], isLoading: loadingSeasonal } = useQuery({
+    queryKey: ["seasonalAnalytics", season, seasonalMetric],
     queryFn: async () => {
       let res;
-      if (seasonalMetric === 'biggest-movers') res = await F1Api.getBiggestMovers(season);
-      else if (seasonalMetric === 'pit-stops-eff') res = await F1Api.getPitStopEfficiency(season);
-      else if (seasonalMetric === 'teammate-quali') res = await F1Api.getTeammateQualifying(season);
-      else if (seasonalMetric === 'driver-form') res = await F1Api.getDriverForm(season);
-      else if (seasonalMetric === 'points-progression') res = await F1Api.getPointsProgression(season);
-      return res?.data || res || [];
+      if (seasonalMetric === "biggest-movers")
+        res = await F1Api.getBiggestMovers(season);
+      else if (seasonalMetric === "pit-stops-eff")
+        res = await F1Api.getPitStopEfficiency(season);
+      else if (seasonalMetric === "teammate-quali")
+        res = await F1Api.getTeammateQualifying(season);
+      else if (seasonalMetric === "driver-form")
+        res = await F1Api.getDriverForm(season);
+      else if (seasonalMetric === "points-progression")
+        res = await F1Api.getPointsProgression(season);
+      return toArray(res);
     },
-    enabled: category === 'seasonal',
+    enabled: category === "seasonal",
   });
 
-  // Query Historical Metrics
-  const { data: historicalData, isLoading: loadingHistorical } = useQuery({
-    queryKey: ['historicalAnalytics', historicalMetric],
+  const { data: historicalData = [], isLoading: loadingHistorical } = useQuery({
+    queryKey: ["historicalAnalytics", historicalMetric],
     queryFn: async () => {
       let res;
-      if (historicalMetric === 'pole-to-win') res = await F1Api.getPoleToWinRate();
-      else if (historicalMetric === 'dnf-circuits') res = await F1Api.getHighDnfCircuits();
-      else if (historicalMetric === 'deep-grid-wins') res = await F1Api.getDeepGridWins();
-      else if (historicalMetric === 'most-laps-led') res = await F1Api.getMostLapsLed();
-      else if (historicalMetric === 'fastest-speeds') res = await F1Api.getFastestSpeeds();
-      else if (historicalMetric === 'constructor-one-twos') res = await F1Api.getConstructorOneTwos();
-      else if (historicalMetric === 'youngest-winners') res = await F1Api.getYoungestWinners();
-      else if (historicalMetric === 'circuit-masters') res = await F1Api.getCircuitMasters();
+      if (historicalMetric === "pole-to-win")
+        res = await F1Api.getPoleToWinRate();
+      else if (historicalMetric === "dnf-circuits")
+        res = await F1Api.getHighDnfCircuits();
+      else if (historicalMetric === "deep-grid-wins")
+        res = await F1Api.getDeepGridWins();
+      else if (historicalMetric === "most-laps-led")
+        res = await F1Api.getMostLapsLed();
+      else if (historicalMetric === "fastest-speeds")
+        res = await F1Api.getFastestSpeeds();
+      else if (historicalMetric === "constructor-one-twos")
+        res = await F1Api.getConstructorOneTwos();
+      else if (historicalMetric === "youngest-winners")
+        res = await F1Api.getYoungestWinners();
+      else if (historicalMetric === "circuit-masters")
+        res = await F1Api.getCircuitMasters();
       else res = await F1Api.getAllTimeWinners();
-      return res?.data || res || [];
+      return toArray(res);
     },
-    enabled: category === 'historical',
+    enabled: category === "historical",
   });
 
-  const isLoading = category === 'seasonal' ? loadingSeasonal : loadingHistorical;
-  const currentData = (category === 'seasonal' ? seasonalData : historicalData) || [];
+  const isLoading =
+    category === "seasonal" ? loadingSeasonal : loadingHistorical;
+  const rawCurrent = category === "seasonal" ? seasonalData : historicalData;
+  const currentData = Array.isArray(rawCurrent) ? rawCurrent : [];
 
-  const initialKey = Array.isArray(currentData) && currentData.length > 0 ? Object.keys(currentData[0])[0] : null;
+  const visibleColumns = useMemo(() => {
+    if (!currentData.length || !currentData[0]) return [];
+    return Object.keys(currentData[0]).filter(
+      (k) => !k.toLowerCase().includes("wiki_url")
+    );
+  }, [currentData]);
+
+  const initialKey = visibleColumns.length > 0 ? visibleColumns[0] : null;
+
   const { sortedData, sortKey, sortDir, requestSort } = useTableSort(
-    Array.isArray(currentData) ? currentData : [],
+    currentData,
     initialKey
   );
 
-  const renderTeammateBattles = () => {
-    if (!seasonalData || seasonalData.length === 0) {
-      return <div className="text-center py-5 text-muted">No teammate qualifying battle data.</div>;
+  // Normalize teammate battles whether backend returns per-driver rows or paired rows
+  const teammatePairs = useMemo(() => {
+    const list = Array.isArray(seasonalData) ? seasonalData : [];
+    if (list.length === 0) return [];
+
+    // Check if already paired (driver_1 / driver_2)
+    if (list[0] && (list[0].driver_1 || list[0].driver_2)) {
+      return list.map((t) => {
+        let d1Wins = Number(t.driver_1_wins ?? 0);
+        let d2Wins = Number(t.driver_2_wins ?? 0);
+        if (!d1Wins && !d2Wins && t.h2h_score) {
+          const parts = String(t.h2h_score).split("-");
+          if (parts.length === 2) {
+            d1Wins = parseInt(parts[0].trim(), 10) || 0;
+            d2Wins = parseInt(parts[1].trim(), 10) || 0;
+          }
+        }
+        return {
+          team_name: t.team_name,
+          driver_1: t.driver_1,
+          driver_2: t.driver_2,
+          d1Wins,
+          d2Wins,
+          meta: t.avg_gap ? `AVG GAP: ${t.avg_gap}s` : null,
+        };
+      });
     }
+
+    // Group per-driver rows ({ team_name, driver_name, outqualified_teammate_count, total_sessions_entered })
+    const byTeam = Object.create(null);
+    list.forEach((row) => {
+      if (!row || !row.team_name) return;
+      if (!byTeam[row.team_name]) byTeam[row.team_name] = [];
+      byTeam[row.team_name].push(row);
+    });
+
+    return Object.entries(byTeam).map(([teamName, drivers]) => {
+      const d1 = drivers[0] || {};
+      const d2 = drivers[1] || {};
+      return {
+        team_name: teamName,
+        driver_1: d1.driver_name || "-",
+        driver_2: d2.driver_name || "Teammate",
+        d1Wins: Number(d1.outqualified_teammate_count ?? 0),
+        d2Wins: Number(d2.outqualified_teammate_count ?? 0),
+        meta: d1.total_sessions_entered
+          ? `${d1.total_sessions_entered} QUALI SESSIONS`
+          : null,
+      };
+    });
+  }, [seasonalData]);
+
+  const renderTeammateBattles = () => {
+    if (teammatePairs.length === 0) {
+      return (
+        <div className="f1-empty-state">
+          No teammate qualifying battle data for {season}.
+        </div>
+      );
+    }
+
     return (
-      <div className="table-responsive">
-        <table className="f1-table">
-          <thead>
-            <tr>
-              <th>Constructor Team</th>
-              <th>Driver 1</th>
-              <th>Driver 2</th>
-              <th>Qualifying H2H Score</th>
-              <th>Avg Gap (sec)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {seasonalData.map((t, idx) => (
-              <tr key={idx}>
-                <td>
-                  <strong>{t.team_name}</strong>
-                </td>
-                <td>
-                  <DriverBadge name={t.driver_1} team={t.team_name} season={season} />
-                </td>
-                <td>
-                  <DriverBadge name={t.driver_2} team={t.team_name} season={season} />
-                </td>
-                <td style={{ fontFamily: 'var(--font-mono)', fontWeight: 'bold' }}>
-                  <span className="badge badge-f1">{t.h2h_score || `${t.driver_1_wins || 0} - ${t.driver_2_wins || 0}`}</span>
-                </td>
-                <td style={{ fontFamily: 'var(--font-mono)' }}>{t.avg_gap ? `${t.avg_gap}s` : '-'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="p-3">
+        <div className="h2h-battles-grid">
+          {teammatePairs.map((t, idx) => {
+            const teamColor = getTeamColor(t.team_name);
+            const total = t.d1Wins + t.d2Wins || 1;
+            const d1Pct = Math.round((t.d1Wins / total) * 100);
+
+            return (
+              <div
+                key={idx}
+                className="h2h-battle-card"
+                style={{ borderColor: `${teamColor}44` }}
+              >
+                <div className="h2h-card-top">
+                  <TeamBadge name={t.team_name} season={season} size={22} />
+                  {t.meta && (
+                    <span className="f1-minimal-pill">{t.meta}</span>
+                  )}
+                </div>
+
+                <div className="h2h-drivers-row">
+                  <div className="h2h-side h2h-left">
+                    <DriverBadge
+                      name={t.driver_1}
+                      team={t.team_name}
+                      season={season}
+                      size={32}
+                    />
+                    <strong className="h2h-score-num">{t.d1Wins}</strong>
+                  </div>
+
+                  <div className="h2h-vs-divider">VS</div>
+
+                  <div className="h2h-side h2h-right">
+                    <strong className="h2h-score-num">{t.d2Wins}</strong>
+                    <DriverBadge
+                      name={t.driver_2}
+                      team={t.team_name}
+                      season={season}
+                      size={32}
+                    />
+                  </div>
+                </div>
+
+                <div className="h2h-bar-track">
+                  <div
+                    className="h2h-bar-fill"
+                    style={{
+                      width: `${d1Pct}%`,
+                      backgroundColor: teamColor,
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   };
 
   return (
     <section id="view-analytics-master" className="content-view active">
-      <div className="view-header">
+      <div className="f1-page-header">
         <div>
-          <h2>Advanced Intelligence & Telemetry Analytics</h2>
-          <p className="text-muted">
-            Deep motorsport analytics, historical records, strategic performance, and head-to-head metrics.
-          </p>
+          <span className="page-overline">
+            TELEMETRY INTELLIGENCE & HISTORICAL RECORDS
+          </span>
+          <h2 className="page-main-title">
+            Advanced Intelligence & Telemetry Analytics
+          </h2>
+        </div>
+
+        <div className="f1-segmented-tabs">
+          <button
+            id="btn-cat-seasonal"
+            type="button"
+            className={`seg-tab-btn ${category === "seasonal" ? "active" : ""}`}
+            onClick={() => setCategory("seasonal")}
+          >
+            {season} Season Telemetry
+          </button>
+          <button
+            id="btn-cat-historical"
+            type="button"
+            className={`seg-tab-btn ${category === "historical" ? "active" : ""}`}
+            onClick={() => setCategory("historical")}
+          >
+            All-Time Historical Records
+          </button>
         </div>
       </div>
 
-      {/* Category Toggle Tabs */}
-      <div className="analytics-category-tabs">
-        <button
-          id="btn-cat-seasonal"
-          className={`analytics-cat-btn ${category === 'seasonal' ? 'active' : ''}`}
-          onClick={() => setCategory('seasonal')}
-        >
-          <i className="fa-solid fa-gauge-high"></i> Current Season Telemetry ({season})
-        </button>
-        <button
-          id="btn-cat-historical"
-          className={`analytics-cat-btn ${category === 'historical' ? 'active' : ''}`}
-          onClick={() => setCategory('historical')}
-        >
-          <i className="fa-solid fa-landmark"></i> All-Time & Historical Intelligence
-        </button>
-      </div>
-
-      {/* Sub-dropdown for Metrics */}
-      <div className="analytics-metric-bar">
-        {category === 'seasonal' ? (
-          <div id="seasonal-metrics-container" className="metrics-selector-box">
-            <label htmlFor="seasonal-metric-select">
-              <i className="fa-solid fa-chart-line"></i> Select Seasonal Metric:
-            </label>
+      {/* METRIC SELECTOR BAR */}
+      <div className="f1-analytics-toolbar">
+        {category === "seasonal" ? (
+          <div
+            id="seasonal-metrics-container"
+            className="analytics-picker-row"
+          >
+            <span className="picker-overline">SEASONAL METRIC</span>
             <F1Select
               id="seasonal-metric-select"
               value={seasonalMetric}
               onChange={(val) => setSeasonalMetric(val)}
               options={[
-                { value: 'biggest-movers',     label: 'Greatest Comebacks & Positions Gained' },
-                { value: 'pit-stops-eff',      label: 'Pit Stop Efficiency & Duration by Team' },
-                { value: 'teammate-quali',     label: 'Teammate Qualifying Battles (Head-to-Head)' },
-                { value: 'driver-form',        label: 'Driver Rolling Form (Last 5 Races Moving Avg)' },
-                { value: 'points-progression', label: 'Cumulative Season Points Trajectory' },
+                {
+                  value: "biggest-movers",
+                  label: "Greatest Comebacks & Positions Gained",
+                },
+                {
+                  value: "pit-stops-eff",
+                  label: "Pit Stop Efficiency & Duration by Team",
+                },
+                {
+                  value: "teammate-quali",
+                  label: "Teammate Qualifying Battles (Head-to-Head)",
+                },
+                {
+                  value: "driver-form",
+                  label: "Driver Rolling Form (Last 5 Races Moving Avg)",
+                },
+                {
+                  value: "points-progression",
+                  label: "Cumulative Season Points Trajectory",
+                },
               ]}
             />
           </div>
         ) : (
-          <div id="historical-metrics-container" className="metrics-selector-box">
-            <label htmlFor="historical-metric-select">
-              <i className="fa-solid fa-trophy"></i> Select Historical Metric:
-            </label>
+          <div
+            id="historical-metrics-container"
+            className="analytics-picker-row"
+          >
+            <span className="picker-overline">HISTORICAL METRIC</span>
             <F1Select
               id="historical-metric-select"
               value={historicalMetric}
               onChange={(val) => setHistoricalMetric(val)}
               options={[
-                { value: 'pole-to-win',          label: 'Pole-to-Win Conversion Rate (% of Pole Sitters Winning)' },
-                { value: 'dnf-circuits',          label: 'High DNF & Incident-Prone Tracks' },
-                { value: 'deep-grid-wins',        label: 'Miracle Wins from Deepest Grid (P10+)' },
-                { value: 'most-laps-led',         label: 'All-Time Laps Led (P1 Race Leaders)' },
-                { value: 'fastest-speeds',        label: 'Fastest Race Speed Traps Recorded in History' },
-                { value: 'all-time-winners',      label: 'All-Time Grand Prix Winners (Hall of Fame)' },
-                { value: 'constructor-one-twos',  label: 'Constructor 1-2 Finishes in History' },
-                { value: 'youngest-winners',      label: 'Youngest Race Winners in F1 History' },
-                { value: 'circuit-masters',       label: 'King of the Circuit (Mastery per Track)' },
+                {
+                  value: "pole-to-win",
+                  label:
+                    "Pole-to-Win Conversion Rate (% of Pole Sitters Winning)",
+                },
+                {
+                  value: "dnf-circuits",
+                  label: "High DNF & Incident-Prone Tracks",
+                },
+                {
+                  value: "deep-grid-wins",
+                  label: "Miracle Wins from Deepest Grid (P10+)",
+                },
+                {
+                  value: "most-laps-led",
+                  label: "All-Time Laps Led (P1 Race Leaders)",
+                },
+                {
+                  value: "fastest-speeds",
+                  label: "Fastest Race Speed Traps Recorded in History",
+                },
+                {
+                  value: "all-time-winners",
+                  label: "All-Time Grand Prix Winners (Hall of Fame)",
+                },
+                {
+                  value: "constructor-one-twos",
+                  label: "Constructor 1-2 Finishes in History",
+                },
+                {
+                  value: "youngest-winners",
+                  label: "Youngest Race Winners in F1 History",
+                },
+                {
+                  value: "circuit-masters",
+                  label: "King of the Circuit (Mastery per Track)",
+                },
               ]}
             />
           </div>
         )}
+
+        <span id="analytics-card-badge" className="f1-minimal-pill">
+          {category === "seasonal" ? `${season} SEASON` : "ALL-TIME RECORD"}
+        </span>
       </div>
 
-      <div className="f1-card mt-3">
-        <div className="card-header flex-between">
-          <h3 id="analytics-card-title">
-            <i className="fa-solid fa-chart-pie"></i>{' '}
-            {category === 'seasonal'
-              ? seasonalMetric.replace(/-/g, ' ').toUpperCase()
-              : historicalMetric.replace(/-/g, ' ').toUpperCase()}
+      {/* ANALYTICS CONTENT PANEL */}
+      <div className="f1-minimal-panel">
+        <div className="panel-header-bar">
+          <h3 className="panel-title" id="analytics-card-title">
+            {category === "seasonal"
+              ? seasonalMetric.replace(/-/g, " ").toUpperCase()
+              : historicalMetric.replace(/-/g, " ").toUpperCase()}
           </h3>
-          <span id="analytics-card-badge" className="badge badge-f1">
-            {category === 'seasonal' ? `${season} Season` : 'All-Time Record'}
-          </span>
         </div>
-        <div className="card-body p-0">
+
+        <div>
           {isLoading ? (
-            <div className="text-center py-5 text-muted">
+            <div className="f1-loading-state">
               <i className="fa-solid fa-spinner fa-spin fa-2x"></i>
-              <p className="mt-2">Calculating telemetry data...</p>
+              <p>Calculating telemetry metrics...</p>
             </div>
-          ) : category === 'seasonal' && seasonalMetric === 'driver-form' ? (
-            <DriverFormChart rawData={currentData} />
-          ) : category === 'seasonal' && seasonalMetric === 'points-progression' ? (
-            <PointsProgressionChart rawData={currentData} />
-          ) : category === 'seasonal' && seasonalMetric === 'teammate-quali' ? (
+          ) : category === "seasonal" && seasonalMetric === "driver-form" ? (
+            <div className="p-3">
+              <DriverFormChart rawData={currentData} />
+            </div>
+          ) : category === "seasonal" &&
+            seasonalMetric === "points-progression" ? (
+            <div className="p-3">
+              <PointsProgressionChart rawData={currentData} />
+            </div>
+          ) : category === "seasonal" && seasonalMetric === "teammate-quali" ? (
             renderTeammateBattles()
-          ) : Array.isArray(sortedData) && sortedData.length > 0 ? (
+          ) : Array.isArray(sortedData) &&
+            sortedData.length > 0 &&
+            visibleColumns.length > 0 ? (
             <div className="table-responsive">
-              <table className="f1-table">
+              <table className="f1-minimal-table">
                 <thead>
                   <tr>
-                    {Object.keys(sortedData[0]).map((key) => (
+                    {visibleColumns.map((key) => (
                       <th
                         key={key}
-                        className={sortKey === key ? `sort-${sortDir}` : 'sortable'}
+                        className={
+                          sortKey === key ? `sort-${sortDir}` : "sortable"
+                        }
                         onClick={() => requestSort(key)}
-                        style={{ textTransform: 'capitalize' }}
                       >
-                        {key.replace(/_/g, ' ')} <span className="sort-icon"></span>
+                        {key.replace(/_/g, " ").toUpperCase()}{" "}
+                        <span className="sort-icon"></span>
                       </th>
                     ))}
                   </tr>
@@ -217,22 +382,78 @@ export default function AnalyticsPage() {
                 <tbody>
                   {sortedData.slice(0, 50).map((row, idx) => (
                     <tr key={idx}>
-                      {Object.entries(row).map(([k, val], colIdx) => {
+                      {visibleColumns.map((k, colIdx) => {
+                        const val = row[k];
+                        const keyLower = k.toLowerCase();
                         const isYearOrSeason =
-                          k.toLowerCase().includes('year') ||
-                          k.toLowerCase().includes('season') ||
-                          (typeof val === 'number' && Number.isInteger(val) && val >= 1900 && val <= 2100);
+                          keyLower.includes("year") ||
+                          keyLower.includes("season") ||
+                          (typeof val === "number" &&
+                            Number.isInteger(val) &&
+                            val >= 1900 &&
+                            val <= 2100);
+
+                        const isDriverCol =
+                          (keyLower === "driver" ||
+                            keyLower === "driver_name" ||
+                            keyLower === "winner" ||
+                            keyLower === "winner_name") &&
+                          typeof val === "string";
+
+                        const isTeamCol =
+                          (keyLower === "team" ||
+                            keyLower === "team_name" ||
+                            keyLower === "constructor" ||
+                            keyLower === "constructor_name") &&
+                          typeof val === "string";
+
+                        const isRaceCol =
+                          (keyLower === "grand_prix" ||
+                            keyLower === "grand_prix_name" ||
+                            keyLower === "race_name") &&
+                          typeof val === "string";
+
+                        const isCircuitCol =
+                          (keyLower === "circuit" ||
+                            keyLower === "circuit_name") &&
+                          typeof val === "string";
 
                         return (
-                          <td key={colIdx}>
-                            {k.includes('wiki_url') ? (
-                              <WikiLink text="View Article" url={val} />
-                            ) : k.toLowerCase().includes('nationality') || k.toLowerCase().includes('country') ? (
+                          <td
+                            key={colIdx}
+                            className={
+                              typeof val === "number" ? "cell-tabular" : ""
+                            }
+                          >
+                            {isDriverCol ? (
+                              <DriverBadge
+                                name={val}
+                                team={
+                                  row.team_name ||
+                                  row.constructor_name ||
+                                  row.team ||
+                                  ""
+                                }
+                                season={row.year || row.season || season}
+                                wikiUrl={row.driver_wiki_url}
+                              />
+                            ) : isTeamCol ? (
+                              <TeamBadge
+                                name={val}
+                                season={row.year || row.season || (category === "seasonal" ? season : null)}
+                                wikiUrl={row.constructor_wiki_url}
+                              />
+                            ) : isRaceCol ? (
+                              <WikiLink text={val} url={row.race_wiki_url} />
+                            ) : isCircuitCol ? (
+                              <WikiLink text={val} url={row.circuit_wiki_url} />
+                            ) : keyLower.includes("nationality") ||
+                              keyLower.includes("country") ? (
                               <span>
-                                <CountryFlag name={val} />
-                                {String(val ?? '-')}
+                                <CountryFlag name={val} size={18} />
+                                {String(val ?? "-")}
                               </span>
-                            ) : typeof val === 'number' ? (
+                            ) : typeof val === "number" ? (
                               isYearOrSeason ? (
                                 <strong>{val}</strong>
                               ) : Number.isInteger(val) ? (
@@ -241,7 +462,7 @@ export default function AnalyticsPage() {
                                 val.toFixed(2)
                               )
                             ) : (
-                              String(val ?? '-')
+                              String(val ?? "-")
                             )}
                           </td>
                         );
@@ -252,7 +473,7 @@ export default function AnalyticsPage() {
               </table>
             </div>
           ) : (
-            <div className="text-center py-5 text-muted">
+            <div className="f1-empty-state">
               No telemetry analytics recorded for this metric.
             </div>
           )}

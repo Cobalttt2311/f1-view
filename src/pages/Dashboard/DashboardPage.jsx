@@ -3,9 +3,22 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useSeason } from "../../context/SeasonContext";
 import { useTimezone } from "../../context/TimezoneContext";
-import { F1Api } from "../../api/client";
+import { F1Api, toArray } from "../../api/client";
 import DriverBadge from "../../components/common/DriverBadge";
+import TeamBadge from "../../components/common/TeamBadge";
 import WikiLink from "../../components/common/WikiLink";
+import { CountryFlag } from "../../utils/flags";
+import {
+  DEFAULT_CAR_SILHOUETTE,
+  DEFAULT_DRIVER_SILHOUETTE,
+  getDriverHeadshot,
+  getTeamLogo,
+  getCarLivery,
+  getCircuitTrackMap,
+  getHeroImage,
+  getTeamCardGradient,
+  resolveDriverCode,
+} from "../../utils/f1Assets";
 
 export default function DashboardPage() {
   const { season } = useSeason();
@@ -13,29 +26,33 @@ export default function DashboardPage() {
   const navigate = useNavigate();
 
   // Queries
-  const { data: races = [], isLoading: loadingRaces } = useQuery({
+  const { data: racesData = [], isLoading: loadingRaces } = useQuery({
     queryKey: ["raceCalendar", season],
     queryFn: async () => {
       const res = await F1Api.getRaceCalendar(season);
-      return res?.data || res || [];
+      return toArray(res);
     },
   });
 
-  const { data: drivers = [], isLoading: loadingDrivers } = useQuery({
+  const { data: driversData = [], isLoading: loadingDrivers } = useQuery({
     queryKey: ["driverStandings", season],
     queryFn: async () => {
       const res = await F1Api.getDriverStandingsByYear(season);
-      return res?.data || res || [];
+      return toArray(res);
     },
   });
 
-  const { data: constructors = [] } = useQuery({
+  const { data: constructorsData = [] } = useQuery({
     queryKey: ["constructorStandings", season],
     queryFn: async () => {
       const res = await F1Api.getConstructorStandingsByYear(season);
-      return res?.data || res || [];
+      return toArray(res);
     },
   });
+
+  const races = Array.isArray(racesData) ? racesData : [];
+  const drivers = Array.isArray(driversData) ? driversData : [];
+  const constructors = Array.isArray(constructorsData) ? constructorsData : [];
 
   // Next Race Target & Countdown logic
   const [countdown, setCountdown] = useState({
@@ -48,6 +65,21 @@ export default function DashboardPage() {
   const [isLiveNow, setIsLiveNow] = useState(false);
   const [isPastSeason, setIsPastSeason] = useState(false);
 
+  // Asset fallback states
+  const [heroImgFailed, setHeroImgFailed] = useState(false);
+  const [trackSvgFailed, setTrackSvgFailed] = useState(false);
+  const [leaderImgFailed, setLeaderImgFailed] = useState(false);
+  const [carImgFailed, setCarImgFailed] = useState(false);
+  const [teamLogoFailed, setTeamLogoFailed] = useState(false);
+
+  useEffect(() => {
+    setHeroImgFailed(false);
+    setTrackSvgFailed(false);
+    setLeaderImgFailed(false);
+    setCarImgFailed(false);
+    setTeamLogoFailed(false);
+  }, [season, targetRace?.round]);
+
   useEffect(() => {
     if (!races || races.length === 0) return;
     const todayStr = new Date().toISOString().split("T")[0];
@@ -55,7 +87,6 @@ export default function DashboardPage() {
     let found = null;
     let live = false;
 
-    // Check if live now
     for (const r of races) {
       const start = r.fp1_date || r.race_date;
       const end = r.race_date;
@@ -72,7 +103,7 @@ export default function DashboardPage() {
 
     const past = !found;
     if (past) {
-      found = races[races.length - 1]; // Season Finale
+      found = races[races.length - 1];
     }
 
     setTargetRace(found);
@@ -102,489 +133,518 @@ export default function DashboardPage() {
   const uniqueCircuits = new Set(races.map((r) => r.circuit_name));
   const todayStr = new Date().toISOString().split("T")[0];
 
+  // Resolve spotlight assets
+  const heroBgUrl = targetRace
+    ? getHeroImage(
+      targetRace.circuit_name,
+      targetRace.grand_prix_name,
+      targetRace.location,
+      targetRace.country
+    )
+    : "/assets/hero/dashboard_hero.jpg";
+
+  const trackSvgUrl = targetRace
+    ? getCircuitTrackMap(
+      targetRace.circuit_name,
+      targetRace.grand_prix_name,
+      targetRace.location,
+      targetRace.country
+    )
+    : null;
+
+  const dLeaderHeadshot = dLeader
+    ? getDriverHeadshot(dLeader.driver_name, dLeader.driver_code, season)
+    : null;
+  const dLeaderCode = dLeader
+    ? resolveDriverCode(dLeader.driver_name, dLeader.driver_code)
+    : "";
+  const dLeaderTheme = getTeamCardGradient(dLeader?.team_name);
+
+  const cLeaderCar = cLeader
+    ? getCarLivery(season, cLeader.constructor_name)
+    : null;
+  const cLeaderLogo = cLeader ? getTeamLogo(cLeader.constructor_name, season) : null;
+  const cLeaderTheme = getTeamCardGradient(cLeader?.constructor_name);
+
+  const splitDriverName = (fullName = "") => {
+    const parts = String(fullName).trim().split(/\s+/);
+    if (parts.length <= 1) return { first: "", last: fullName };
+    return {
+      first: parts.slice(0, -1).join(" "),
+      last: parts[parts.length - 1],
+    };
+  };
+
+  const leaderNames = splitDriverName(dLeader?.driver_name);
+
   return (
     <section id="view-dashboard" className="content-view active">
-      <div className="view-header">
-        <div>
-          <h2>Season Overview & Telemetry Dashboard</h2>
-          <p className="text-muted">
-            High-level statistics, championship leaders, and quick access to all
-            Grand Prix telemetry for{" "}
-            <strong className="current-season-display">{season} Season</strong>.
-          </p>
-        </div>
-      </div>
+      {/* 1. HERO GRAND PRIX SPOTLIGHT BANNER */}
+      {targetRace && (
+        <div
+          className="f1-hero-spotlight"
+          id="dash-next-race-card"
+          style={{
+            backgroundImage: !heroImgFailed
+              ? `linear-gradient(90deg, rgba(7,7,10,0.95) 0%, rgba(7,7,10,0.78) 52%, rgba(7,7,10,0.88) 100%), url("${heroBgUrl}")`
+              : "linear-gradient(135deg, #13151f 0%, #090a0f 100%)",
+          }}
+        >
+          {/* Hidden preloader to detect hero image failure */}
+          <img
+            src={heroBgUrl}
+            alt=""
+            style={{ display: "none" }}
+            onError={() => setHeroImgFailed(true)}
+          />
 
-      {/* 4 Stat Cards */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon">
-            <i className="fa-solid fa-trophy"></i>
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Drivers Leader</span>
-            <h3 id="dash-driver-leader">
-              {dLeader ? (
-                <WikiLink
-                  text={dLeader.driver_name}
-                  url={dLeader.driver_wiki_url}
-                />
-              ) : (
-                "-"
+          <div className="hero-spotlight-left">
+            <div className="hero-meta-tags">
+              <span className="f1-minimal-pill pill-accent" id="dash-next-live-badge">
+                ROUND {targetRace.round}
+              </span>
+              <span className="f1-minimal-pill" id="dash-next-status-text">
+                {isLiveNow
+                  ? "LIVE RACE WEEKEND"
+                  : isPastSeason
+                    ? "SEASON FINALE"
+                    : "UPCOMING GRAND PRIX"}
+              </span>
+              {targetRace.has_sprint && (
+                <span className="f1-minimal-pill">SPRINT</span>
               )}
-            </h3>
-            <p id="dash-driver-leader-pts" className="stat-sub">
-              {dLeader
-                ? `${dLeader.total_points ?? 0} PTS (${dLeader.total_wins ?? 0} Wins) • ${dLeader.team_name || ""}`
-                : "-"}
-            </p>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon">
-            <i className="fa-solid fa-car-tunnel"></i>
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Constructors Leader</span>
-            <h3 id="dash-team-leader">
-              {cLeader ? (
-                <WikiLink
-                  text={cLeader.constructor_name}
-                  url={cLeader.constructor_wiki_url}
-                />
-              ) : (
-                "-"
-              )}
-            </h3>
-            <p id="dash-team-leader-pts" className="stat-sub">
-              {cLeader
-                ? `${cLeader.total_points ?? 0} PTS (${cLeader.total_wins ?? 0} Wins)`
-                : "-"}
-            </p>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon">
-            <i className="fa-solid fa-flag-checkered"></i>
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Total Races</span>
-            <h3 id="dash-total-races">{races.length}</h3>
-            <p id="dash-races-sub" className="stat-sub">
-              {season} Championship Season
-            </p>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon">
-            <i className="fa-solid fa-road"></i>
-          </div>
-          <div className="stat-info">
-            <span className="stat-label">Venues Visited</span>
-            <h3 id="dash-total-circuits">{uniqueCircuits.size}</h3>
-            <p className="stat-sub">Worldwide Tracks</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="dash-grid-two">
-        {/* Left: Season Grand Prix Schedule */}
-        <div className="f1-card" id="dash-schedule-card">
-          <div className="card-header">
-            <h3>
-              <i className="fa-solid fa-calendar-check"></i> Season Grand Prix
-              Schedule
-            </h3>
-            <button
-              className="btn btn-sm btn-outline"
-              onClick={() => navigate("/calendar")}
-            >
-              Full Calendar <i className="fa-solid fa-arrow-right"></i>
-            </button>
-          </div>
-          <div className="card-body p-0">
-            <div className="table-responsive" style={{ maxHeight: "540px" }}>
-              <table className="f1-table" id="dash-races-table">
-                <thead>
-                  <tr>
-                    <th>Round</th>
-                    <th>Grand Prix</th>
-                    <th>Circuit</th>
-                    <th>Race Date</th>
-                    <th>Race Time ({timezone})</th>
-                    <th>Format</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loadingRaces ? (
-                    <tr>
-                      <td colSpan="6" className="text-center py-4">
-                        <i className="fa-solid fa-spinner fa-spin"></i> Loading
-                        season races...
-                      </td>
-                    </tr>
-                  ) : races.length > 0 ? (
-                    races.map((r) => {
-                      const isTarget =
-                        targetRace && r.round === targetRace.round;
-                      const isPast = r.race_date && r.race_date < todayStr;
-                      const isLive = isLiveNow && isTarget;
-
-                      let roundBadge = (
-                        <span className="badge badge-f1">R{r.round}</span>
-                      );
-                      let rowClass = "clickable-row";
-
-                      if (isLive) {
-                        roundBadge = (
-                          <span className="badge badge-live">
-                            <i className="fa-solid fa-circle-dot fa-beat"></i> R
-                            {r.round} LIVE
-                          </span>
-                        );
-                        rowClass += " row-live";
-                      } else if (isTarget) {
-                        const labelText = isPastSeason ? "LATEST" : "UPCOMING";
-                        roundBadge = (
-                          <span className="badge badge-upcoming">
-                            <i className="fa-solid fa-flag-checkered"></i> R
-                            {r.round} {labelText}
-                          </span>
-                        );
-                        rowClass += " row-upcoming";
-                      } else if (isPast) {
-                        roundBadge = (
-                          <span
-                            className="badge badge-neutral"
-                            style={{ opacity: 0.65 }}
-                          >
-                            R{r.round}
-                          </span>
-                        );
-                        rowClass += " row-past";
-                      }
-
-                      return (
-                        <tr
-                          key={r.round}
-                          className={rowClass}
-                          style={{ cursor: "pointer" }}
-                          onClick={() => navigate("/weekend-hub")}
-                        >
-                          <td>{roundBadge}</td>
-                          <td style={{ fontWeight: 600 }}>
-                            <WikiLink
-                              text={r.grand_prix_name}
-                              url={r.race_wiki_url}
-                            />
-                          </td>
-                          <td>
-                            <WikiLink
-                              text={r.circuit_name}
-                              url={r.circuit_wiki_url}
-                            />
-                          </td>
-                          <td>
-                            <span
-                              style={{
-                                fontFamily: "var(--font-mono)",
-                                fontSize: "12px",
-                              }}
-                            >
-                              {r.race_date || "-"}
-                            </span>
-                          </td>
-                          <td>
-                            <span
-                              className="session-time-val"
-                              style={{
-                                fontFamily: "var(--font-mono)",
-                                fontSize: "12px",
-                              }}
-                            >
-                              {formatSessionTime(
-                                r.race_time_utc,
-                                r.race_time_wib,
-                              )}
-                            </span>
-                          </td>
-                          <td>
-                            {r.has_sprint ? (
-                              <span className="badge badge-sprint">
-                                <i className="fa-solid fa-bolt"></i> Sprint
-                              </span>
-                            ) : (
-                              <span className="badge badge-neutral">
-                                Standard
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan="6" className="text-center py-4 text-muted">
-                        No races found for season {season}.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
             </div>
-          </div>
-        </div>
 
-        {/* Right: Top 5 Drivers Standings Preview & Next Race Card */}
-        <div className="dash-right-col">
-          {/* Top 5 Driver Championship */}
-          <div className="f1-card">
-            <div className="card-header flex-between">
-              <h3>
-                <i className="fa-solid fa-ranking-star"></i> Top 5 Driver
-                Championship
-              </h3>
+            <h2 className="hero-gp-title" id="dash-next-gp-name">
+              {targetRace.grand_prix_name}
+            </h2>
+
+            <div className="hero-circuit-meta">
+              <CountryFlag
+                name={targetRace.country || targetRace.location}
+                size={20}
+              />
+              <span id="dash-next-circuit" className="hero-circuit-name">
+                {targetRace.circuit_name}
+              </span>
+              <span className="hero-meta-sep hero-location-icon">
+                <i className="fa-solid fa-location-dot"></i>
+              </span>
+              <span id="dash-next-location" className="hero-location-text">
+                {[targetRace.location, targetRace.country]
+                  .filter(Boolean)
+                  .join(", ")}
+              </span>
+            </div>
+
+            <div className="hero-actions-row">
               <button
-                className="btn btn-sm btn-outline"
-                onClick={() => navigate("/standings")}
+                type="button"
+                className="f1-btn-primary"
+                onClick={() => navigate("/weekend-hub")}
               >
-                Full Standings <i className="fa-solid fa-arrow-right"></i>
+                <span>Open Race Weekend Hub</span>
+                <i className="fa-solid fa-arrow-right"></i>
+              </button>
+              <button
+                type="button"
+                className="f1-btn-ghost"
+                onClick={() => navigate("/calendar")}
+              >
+                <span>Full Season Calendar</span>
               </button>
             </div>
-            <div className="card-body p-0">
-              <div className="table-responsive">
-                <table className="f1-table" id="dash-standings-table">
-                  <thead>
-                    <tr>
-                      <th>Pos</th>
-                      <th>Driver</th>
-                      <th>Constructor</th>
-                      <th>Wins</th>
-                      <th className="text-right">Points</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {loadingDrivers ? (
-                      <tr>
-                        <td colSpan="5" className="text-center py-4">
-                          <i className="fa-solid fa-spinner fa-spin"></i>{" "}
-                          Loading standings...
-                        </td>
-                      </tr>
-                    ) : drivers.length > 0 ? (
-                      drivers.slice(0, 5).map((d, i) => (
-                        <tr key={d.driver_code || d.driver_name || i}>
-                          <td className={`pos-${i + 1}`}>
-                            P{d.championship_rank || i + 1}
-                          </td>
-                          <td>
-                            <DriverBadge
-                              name={d.driver_name}
-                              code={d.driver_code}
-                              team={d.team_name}
-                              season={season}
-                              wikiUrl={d.driver_wiki_url}
-                              // isHistorical={isHistoricalDriver}
-                            />
-                          </td>
-                          <td>
-                            <WikiLink
-                              text={d.team_name}
-                              url={d.constructor_wiki_url}
-                            />
-                          </td>
-                          <td>{d.total_wins ?? 0}</td>
-                          <td
-                            className="text-right font-weight-bold"
-                            style={{ fontFamily: "var(--font-mono)" }}
-                          >
-                            {d.total_points ?? 0}
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="5" className="text-center py-4 text-muted">
-                          No standings available for {season}.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+          </div>
+
+          <div className="hero-spotlight-right">
+            {!isLiveNow && !isPastSeason && (
+              <div className="hero-countdown-box">
+                <span className="countdown-overline">
+                  <span className="countdown-live-dot" />
+                  NEXT SESSION COUNTDOWN
+                </span>
+                <div className="countdown-digits-row">
+                  <div className="countdown-unit">
+                    <span className="countdown-num">
+                      {String(countdown.days).padStart(2, "0")}
+                    </span>
+                    <span className="countdown-lbl">DAYS</span>
+                  </div>
+                  <span className="countdown-divider" />
+                  <div className="countdown-unit">
+                    <span className="countdown-num">
+                      {String(countdown.hours).padStart(2, "0")}
+                    </span>
+                    <span className="countdown-lbl">HRS</span>
+                  </div>
+                  <span className="countdown-divider" />
+                  <div className="countdown-unit">
+                    <span className="countdown-num">
+                      {String(countdown.mins).padStart(2, "0")}
+                    </span>
+                    <span className="countdown-lbl">MINS</span>
+                  </div>
+                  <span className="countdown-divider" />
+                  <div className="countdown-unit">
+                    <span className="countdown-num">
+                      {String(countdown.secs).padStart(2, "0")}
+                    </span>
+                    <span className="countdown-lbl">SECS</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {trackSvgUrl && !trackSvgFailed && (
+              <div className="hero-track-vector-wrap">
+                <img
+                  src={trackSvgUrl}
+                  alt={targetRace.circuit_name}
+                  className="hero-track-svg"
+                  onError={() => setTrackSvgFailed(true)}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 2. CHAMPIONSHIP LEADERS & SEASON KPI STRIP */}
+      <div className="dash-leaders-strip">
+        {/* WDC P1 Leader Card */}
+        <div
+          className="leader-spotlight-card f1-halftone-card"
+          style={{
+            background: dLeaderTheme.gradient,
+            borderColor: `${dLeaderTheme.baseColor}55`,
+          }}
+          onClick={() => navigate("/standings")}
+        >
+          <div className="leader-card-content">
+            <div className="leader-card-top">
+              <span className="leader-overline">DRIVERS STANDINGS</span>
+              <span className="leader-pos-tag">P1</span>
+            </div>
+
+            <div className="leader-name-block" id="dash-driver-leader">
+              {dLeader ? (
+                <>
+                  <span className="leader-first-name">{leaderNames.first}</span>
+                  <span className="leader-last-name">
+                    <WikiLink
+                      text={leaderNames.last}
+                      url={dLeader.driver_wiki_url}
+                    />
+                  </span>
+                </>
+              ) : (
+                <span className="leader-last-name">-</span>
+              )}
+            </div>
+
+            <p className="leader-team-sub">{dLeader?.team_name || "-"}</p>
+
+            <div className="leader-metrics-row" id="dash-driver-leader-pts">
+              <div className="leader-metric">
+                <span className="metric-val">{dLeader?.total_points ?? 0}</span>
+                <span className="metric-unit">PTS</span>
+              </div>
+              <div className="leader-metric-divider" />
+              <div className="leader-metric">
+                <span className="metric-val">{dLeader?.total_wins ?? 0}</span>
+                <span className="metric-unit">WINS</span>
               </div>
             </div>
           </div>
 
-          {/* Next / Current Grand Prix Widget */}
-          {targetRace && (
-            <div className="f1-card" id="dash-next-race-card">
-              <div className="card-header flex-between">
-                <h3 id="dash-next-status-title">
-                  <i className="fa-solid fa-flag-checkered"></i>{" "}
-                  <span id="dash-next-status-text">
-                    {isLiveNow ? (
-                      <span style={{ color: "var(--f1-red)" }}>
-                        <i className="fa-solid fa-circle-dot text-danger fa-beat"></i>{" "}
-                        LIVE RACE WEEKEND (NOW)
-                      </span>
-                    ) : isPastSeason ? (
-                      "Season Finale (Completed)"
-                    ) : (
-                      "Upcoming Grand Prix"
-                    )}
-                  </span>
-                </h3>
-                <span
-                  id="dash-next-live-badge"
-                  className={`badge ${isLiveNow ? "badge-danger" : "badge-f1"}`}
-                >
-                  ROUND {targetRace.round}
-                </span>
-              </div>
-              <div className="card-body">
-                <div>
-                  <h4
-                    id="dash-next-gp-name"
-                    style={{
-                      fontFamily: "var(--font-heading)",
-                      fontSize: "20px",
-                      color: "#ffffff",
-                      marginBottom: "2px",
-                    }}
-                  >
-                    {targetRace.grand_prix_name}
-                  </h4>
-                  <p
-                    id="dash-next-circuit"
-                    className="text-muted"
-                    style={{ marginBottom: "4px" }}
-                  >
-                    {targetRace.circuit_name}
-                  </p>
-                  <p
-                    id="dash-next-location"
-                    className="text-muted"
-                    style={{ marginBottom: "16px", fontSize: "12px" }}
-                  >
-                    <i
-                      className="fa-solid fa-location-dot"
-                      style={{ color: "var(--f1-red)", marginRight: "5px" }}
-                    ></i>
-                    {[targetRace.location, targetRace.country]
-                      .filter(Boolean)
-                      .join(", ") ||
-                      targetRace.country ||
-                      ""}
-                  </p>
-                </div>
-
-                {/* Countdown */}
-                {!isLiveNow && !isPastSeason ? (
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(4, 1fr)",
-                      gap: "8px",
-                      textAlign: "center",
-                      marginBottom: "16px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        background: "#15151e",
-                        padding: "8px",
-                        borderRadius: "4px",
-                        border: "1px solid rgba(255,255,255,0.05)",
-                      }}
-                    >
-                      <h3 style={{ margin: 0, color: "var(--f1-cyan)" }}>
-                        {countdown.days}
-                      </h3>
-                      <small className="text-muted">DAYS</small>
-                    </div>
-                    <div
-                      style={{
-                        background: "#15151e",
-                        padding: "8px",
-                        borderRadius: "4px",
-                        border: "1px solid rgba(255,255,255,0.05)",
-                      }}
-                    >
-                      <h3 style={{ margin: 0, color: "var(--f1-cyan)" }}>
-                        {countdown.hours}
-                      </h3>
-                      <small className="text-muted">HRS</small>
-                    </div>
-                    <div
-                      style={{
-                        background: "#15151e",
-                        padding: "8px",
-                        borderRadius: "4px",
-                        border: "1px solid rgba(255,255,255,0.05)",
-                      }}
-                    >
-                      <h3 style={{ margin: 0, color: "var(--f1-cyan)" }}>
-                        {countdown.mins}
-                      </h3>
-                      <small className="text-muted">MINS</small>
-                    </div>
-                    <div
-                      style={{
-                        background: "#15151e",
-                        padding: "8px",
-                        borderRadius: "4px",
-                        border: "1px solid rgba(255,255,255,0.05)",
-                      }}
-                    >
-                      <h3 style={{ margin: 0, color: "var(--f1-cyan)" }}>
-                        {countdown.secs}
-                      </h3>
-                      <small className="text-muted">SECS</small>
-                    </div>
-                  </div>
-                ) : isLiveNow ? (
-                  <div className="badge badge-danger p-2 mb-3 w-100 text-center">
-                    <i className="fa-solid fa-bolt"></i> RACE WEEKEND IN
-                    PROGRESS
-                  </div>
-                ) : (
-                  <div className="badge badge-neutral p-2 mb-3 w-100 text-center">
-                    SEASON COMPLETED
-                  </div>
-                )}
-
-                <button
-                  className="btn btn-sm btn-view-hub-red w-100"
-                  style={{
-                    background: "var(--f1-red)",
-                    color: "#ffffff",
-                    border: "1px solid var(--f1-red)",
-                    fontWeight: 700,
-                    letterSpacing: "0.5px",
-                    transition: "var(--transition)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "#ff1801";
-                    e.currentTarget.style.borderColor = "#ff1801";
-                    e.currentTarget.style.boxShadow =
-                      "0 0 14px rgba(225,6,0,0.5)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "var(--f1-red)";
-                    e.currentTarget.style.borderColor = "var(--f1-red)";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
-                  onClick={() => navigate("/weekend-hub")}
-                >
-                  <i className="fa-solid fa-flag-checkered"></i> View Grand Prix
-                  Weekend Hub
-                </button>
-              </div>
+          {dLeader && (
+            <div className="leader-card-visual">
+              <img
+                src={
+                  leaderImgFailed ? DEFAULT_DRIVER_SILHOUETTE : dLeaderHeadshot
+                }
+                alt={dLeader?.driver_name}
+                className="leader-cutout-img"
+                onError={() => {
+                  if (!leaderImgFailed) setLeaderImgFailed(true);
+                }}
+              />
             </div>
           )}
+        </div>
+
+        {/* WCC P1 Constructor Card */}
+        <div
+          className="leader-spotlight-card constructor-leader-card f1-halftone-card"
+          style={{
+            background: cLeaderTheme.gradient,
+            borderColor: `${cLeaderTheme.baseColor}55`,
+          }}
+          onClick={() => navigate("/standings")}
+        >
+          <div className="leader-card-content w-100">
+            <div className="leader-card-top flex-between">
+              <div>
+                <span className="leader-overline">CONSTRUCTORS STANDINGS</span>
+                <div className="leader-name-block" id="dash-team-leader">
+                  <span className="leader-last-name">
+                    {cLeader ? (
+                      <WikiLink
+                        text={cLeader.constructor_name}
+                        url={cLeader.constructor_wiki_url}
+                      />
+                    ) : (
+                      "-"
+                    )}
+                  </span>
+                </div>
+              </div>
+
+              <div className="constructor-top-right">
+                <span className="leader-pos-tag">P1</span>
+                {cLeaderLogo && !teamLogoFailed && (
+                  <span className="constructor-logo-disc">
+                    <img
+                      src={cLeaderLogo}
+                      alt={cLeader?.constructor_name}
+                      onError={() => setTeamLogoFailed(true)}
+                    />
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="leader-metrics-row" id="dash-team-leader-pts">
+              <div className="leader-metric">
+                <span className="metric-val">{cLeader?.total_points ?? 0}</span>
+                <span className="metric-unit">PTS</span>
+              </div>
+              <div className="leader-metric-divider" />
+              <div className="leader-metric">
+                <span className="metric-val">{cLeader?.total_wins ?? 0}</span>
+                <span className="metric-unit">WINS</span>
+              </div>
+            </div>
+
+            {cLeader && (
+              <div className="constructor-car-showcase">
+                <img
+                  src={carImgFailed ? DEFAULT_CAR_SILHOUETTE : cLeaderCar}
+                  alt={cLeader?.constructor_name}
+                  className="constructor-car-img"
+                  onError={() => {
+                    if (!carImgFailed) setCarImgFailed(true);
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* KPI Summary Column */}
+        <div className="dash-kpi-pair">
+          <div className="minimal-kpi-box">
+            <span className="kpi-overline">CHAMPIONSHIP ROUNDS</span>
+            <div className="kpi-value-row">
+              <strong id="dash-total-races" className="kpi-number">
+                {races.length}
+              </strong>
+              <span id="dash-races-sub" className="kpi-sub">
+                {season} Calendar
+              </span>
+            </div>
+          </div>
+
+          <div className="minimal-kpi-box">
+            <span className="kpi-overline">VENUES VISITED</span>
+            <div className="kpi-value-row">
+              <strong id="dash-total-circuits" className="kpi-number">
+                {uniqueCircuits.size}
+              </strong>
+              <span className="kpi-sub">International Circuits</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. TWO-COLUMN MINIMALIST TABLES (SCHEDULE & TOP 5 STANDINGS) */}
+      <div className="dash-tables-grid">
+        {/* Left: Season Grand Prix Schedule (Clean without Format column) */}
+        <div className="f1-minimal-panel" id="dash-schedule-card">
+          <div className="panel-header-bar">
+            <div>
+              <h3 className="panel-title">Season Grand Prix Schedule</h3>
+              <p className="panel-subtitle">
+                Click any Grand Prix row to inspect session telemetry
+              </p>
+            </div>
+            <button
+              type="button"
+              className="f1-link-btn"
+              onClick={() => navigate("/calendar")}
+            >
+              <span>Full Calendar</span>
+              <i className="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+
+          <div className="table-responsive dash-table-scroll">
+            <table className="f1-minimal-table" id="dash-races-table">
+              <thead>
+                <tr>
+                  <th>RND</th>
+                  <th>GRAND PRIX</th>
+                  <th>CIRCUIT</th>
+                  <th>DATE</th>
+                  <th className="text-right">TIME</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loadingRaces ? (
+                  <tr>
+                    <td colSpan="5" className="table-state-cell">
+                      Loading season calendar...
+                    </td>
+                  </tr>
+                ) : races.length > 0 ? (
+                  races.map((r) => {
+                    const isTarget =
+                      targetRace && r.round === targetRace.round;
+                    const isPast = r.race_date && r.race_date < todayStr;
+                    const isLive = isLiveNow && isTarget;
+
+                    let rowClass = "clickable-row";
+                    if (isLive) rowClass += " row-highlight-live";
+                    else if (isTarget) rowClass += " row-highlight-next";
+                    else if (isPast) rowClass += " row-dimmed";
+
+                    return (
+                      <tr
+                        key={r.round}
+                        className={rowClass}
+                        onClick={() => navigate("/weekend-hub")}
+                      >
+                        <td className="cell-round">
+                          {String(r.round).padStart(2, "0")}
+                        </td>
+                        <td className="cell-gp">
+                          <div className="gp-cell-inner">
+                            <CountryFlag
+                              name={r.country || r.location || r.grand_prix_name}
+                              size={18}
+                            />
+                            <WikiLink
+                              text={String(r.grand_prix_name || "").replace(/Grand Prix/i, "GP")}
+                              url={r.race_wiki_url}
+                            />
+                            {isLive && (
+                              <span className="f1-minimal-pill pill-accent">
+                                LIVE
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="cell-muted">
+                          <WikiLink
+                            text={r.circuit_name}
+                            url={r.circuit_wiki_url}
+                          />
+                        </td>
+                        <td className="cell-tabular">{r.race_date || "-"}</td>
+                        <td className="cell-tabular text-right">
+                          {formatSessionTime(r.race_time_utc, r.race_time_wib)}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="table-state-cell">
+                      No races found for season {season}.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Right: Top 5 Driver Championship (Reference 2 Minimalist Style) */}
+        <div className="f1-minimal-panel">
+          <div className="panel-header-bar">
+            <div>
+              <h3 className="panel-title">Top 5 Driver Standings</h3>
+              <p className="panel-subtitle">
+                World Drivers Championship leaderboard ({season})
+              </p>
+            </div>
+            <button
+              type="button"
+              className="f1-link-btn"
+              onClick={() => navigate("/standings")}
+            >
+              <span>Full Standings</span>
+              <i className="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+
+          <div className="table-responsive">
+            <table className="f1-minimal-table" id="dash-standings-table">
+              <thead>
+                <tr>
+                  <th>POS.</th>
+                  <th>DRIVER</th>
+                  <th>TEAM</th>
+                  <th>WINS</th>
+                  <th className="text-right">PTS.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loadingDrivers ? (
+                  <tr>
+                    <td colSpan="5" className="table-state-cell">
+                      Loading standings...
+                    </td>
+                  </tr>
+                ) : drivers.length > 0 ? (
+                  drivers.slice(0, 5).map((d, i) => {
+                    const rank = d.championship_rank || i + 1;
+                    return (
+                      <tr key={d.driver_code || d.driver_name || i}>
+                        <td className="cell-pos">{rank}</td>
+                        <td>
+                          <DriverBadge
+                            name={d.driver_name}
+                            code={d.driver_code}
+                            team={d.team_name}
+                            season={season}
+                            wikiUrl={d.driver_wiki_url}
+                          />
+                        </td>
+                        <td>
+                          <TeamBadge
+                            name={d.team_name}
+                            season={season}
+                            wikiUrl={d.constructor_wiki_url}
+                          />
+                        </td>
+                        <td className="cell-tabular">{d.total_wins ?? 0}</td>
+                        <td className="cell-points text-right">
+                          {d.total_points ?? 0}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="table-state-cell">
+                      No standings available for {season}.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>
