@@ -3085,6 +3085,11 @@ a {
   overflow: hidden;
 }
 
+.f1-chart-controls-bar .driver-filter-menu {
+  left: 0;
+  right: auto;
+}
+
 .filter-menu-header {
   padding: 10px 14px;
   border-bottom: 1px solid var(--f1-border);
