@@ -3689,6 +3689,9 @@ a {
 .modal-container {
   width: 100%;
   max-width: 720px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
   background: #0d0e14;
   border: 1px solid var(--f1-border-strong);
   border-radius: var(--radius-xl);
@@ -3730,7 +3733,8 @@ a {
 }
 
 .modal-body {
-  padding: 22px;
+  padding: 20px 24px;
+  overflow-y: auto;
 }
 
 .profile-modal-hero {
@@ -3738,8 +3742,8 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding-bottom: 18px;
-  margin-bottom: 18px;
+  padding-bottom: 14px;
+  margin-bottom: 10px;
   border-bottom: 1px solid var(--f1-border);
 }
 
@@ -3750,8 +3754,9 @@ a {
 }
 
 .profile-modal-name {
-  font-size: 26px;
-  font-weight: 900;
+  font-family: "Formula1", var(--font-heading);
+  font-size: 24px;
+  font-weight: 700;
   color: #ffffff;
 }
 
@@ -3764,8 +3769,8 @@ a {
 }
 
 .profile-modal-avatar {
-  width: 96px;
-  height: 96px;
+  width: 82px;
+  height: 82px;
   border-radius: 50%;
   background: radial-gradient(circle at 50% 35%, #525970 0%, #252938 100%);
   border: 1px solid var(--f1-border-strong);
@@ -3787,7 +3792,7 @@ a {
 }
 
 .driver-stat-section {
-  padding: 18px 0;
+  padding: 12px 0;
   border-bottom: 1px solid var(--f1-border);
 }
 
@@ -3795,46 +3800,46 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 20px;
-  margin-top: 8px;
-  font-size: 13.5px;
+  margin-top: 6px;
+  font-size: 13px;
   color: var(--f1-text-secondary);
   font-weight: 500;
 }
 
 .driver-stat-section:first-child {
-  padding-top: 4px;
+  padding-top: 2px;
 }
 
 .driver-stat-section:last-child {
   border-bottom: none;
-  padding-bottom: 4px;
+  padding-bottom: 2px;
 }
 
 .driver-stat-pair-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px 28px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 22px;
 }
 
 .driver-stat-cell {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .driver-stat-span2 {
-  grid-column: span 2;
+  grid-column: 1 / -1;
 }
 
 .driver-stat-label {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 500;
   color: var(--f1-text-muted);
   letter-spacing: 0.01em;
 }
 
 .driver-stat-val {
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 800;
   color: #ffffff;
   line-height: 1.15;
@@ -3843,17 +3848,23 @@ a {
 }
 
 .driver-stat-val-sm {
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 700;
   color: var(--f1-text-main);
-  line-height: 1.45;
+  line-height: 1.4;
   letter-spacing: 0;
+}
+
+@media (max-width: 720px) {
+  .driver-stat-pair-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 520px) {
   .driver-stat-pair-grid {
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 12px;
   }
 
   .driver-stat-span2 {
@@ -3861,7 +3872,7 @@ a {
   }
 
   .driver-stat-val {
-    font-size: 22px;
+    font-size: 20px;
   }
 }
 
