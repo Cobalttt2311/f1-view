@@ -351,7 +351,7 @@ export function getTeamLogo(teamName = "", season = null) {
     if (numSeason >= 2019) {
       const yr = Math.min(numSeason, 2026);
       const fileSlug = resolveTeamFileSlugForYear(slug, yr);
-      if (fileSlug) return `/assets/teams/${yr}/${fileSlug}.png`;
+      if (fileSlug) return `/assets/teams/${fileSlug}.png`;
     }
   }
 
