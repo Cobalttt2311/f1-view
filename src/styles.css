@@ -1793,7 +1793,7 @@ a {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px 14px;
   font-size: 14px;
   color: var(--f1-text-secondary);
 }
@@ -1811,15 +1811,30 @@ a {
 .hero-meta-pair {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
 }
 
 .hero-location-icon {
-  margin: 0 3px 0 10px;
-  font-size: 12px;
+  margin: 0;
+  font-size: 13px;
   color: var(--f1-text-muted);
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 640px) {
+  .hero-circuit-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .hero-meta-pair > :first-child {
+    width: 20px;
+    flex-shrink: 0;
+    justify-content: center;
+  }
 }
 
 .hero-actions-row {
