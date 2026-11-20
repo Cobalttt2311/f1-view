@@ -1814,6 +1814,10 @@ a {
   gap: 8px;
 }
 
+.hero-meta-pair .country-flag-icon {
+  margin-right: 0 !important;
+}
+
 .hero-location-icon {
   margin: 0;
   font-size: 13px;
