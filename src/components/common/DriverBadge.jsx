@@ -9,6 +9,7 @@ import WikiLink from "./WikiLink";
 
 export default function DriverBadge({
   name = "",
+  label = "",
   code = "",
   team = "",
   season = null,
@@ -27,7 +28,7 @@ export default function DriverBadge({
     : getDriverColor(driverCode, team, season);
 
   const showPhoto = Boolean(headshotUrl) && !imgFailed;
-  const displayName = name || code || "-";
+  const displayName = label || name || code || "-";
 
   return (
     <span className="f1-driver-badge-inline">

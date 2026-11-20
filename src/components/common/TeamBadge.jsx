@@ -26,7 +26,6 @@ export default function TeamBadge({
           style={{
             width: `${size}px`,
             height: `${size}px`,
-            backgroundColor: teamColor,
           }}
           title={name}
         >

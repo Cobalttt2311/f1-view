@@ -1414,7 +1414,14 @@ a {
   justify-content: center;
   flex-shrink: 0;
   padding: 3px;
+  background-color: transparent;
   border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+table .team-logo-circle {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: none;
 }
 
 .team-logo-circle img {
@@ -1513,8 +1520,9 @@ a {
 
 .f1-minimal-table thead th {
   padding: 13px 20px;
+  font-family: "Formula1", var(--font-heading);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--f1-text-muted);
@@ -1569,10 +1577,23 @@ a {
 
 .f1-minimal-table tbody td {
   padding: 13px 20px;
+  font-family: var(--font-primary);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 400;
   color: var(--f1-text-secondary);
   vertical-align: middle;
+}
+
+.f1-minimal-table tbody td.cell-pos,
+.f1-minimal-table tbody td.cell-round,
+.f1-minimal-table tbody td.cell-points,
+.f1-minimal-table tbody td.cell-strong,
+.f1-minimal-table tbody td .driver-name-label,
+.f1-minimal-table tbody td .driver-name-strong,
+.f1-minimal-table tbody td .team-name-label,
+.f1-minimal-table tbody td .nation-code-text {
+  font-family: var(--font-primary);
+  font-weight: 400;
 }
 
 .cell-pos,
@@ -2098,9 +2119,9 @@ a {
 .constructor-logo-disc {
   width: 34px;
   height: 34px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.45);
-  padding: 6px;
+  border-radius: 0;
+  background: transparent;
+  padding: 2px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3053,6 +3074,13 @@ a {
   justify-content: space-between;
 }
 
+.leader-spotlight-card,
+.podium-feature-card,
+.f1-driver-editorial-card,
+.f1-constructor-livery-card {
+  font-family: "Formula1", var(--font-primary);
+}
+
 .f1-constructor-livery-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.55);
@@ -3083,9 +3111,9 @@ a {
 .constructor-logo-disc-lg {
   width: 42px;
   height: 42px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.45);
-  padding: 7px;
+  border-radius: 0;
+  background: transparent;
+  padding: 2px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3497,6 +3525,17 @@ a {
   padding: 6px 8px;
   border-radius: 6px;
   cursor: pointer;
+  font-family: "Formula1", var(--font-primary);
+  font-size: 11.5px;
+}
+
+.filter-checkbox-item .driver-name-label,
+.filter-checkbox-item .driver-name-strong {
+  font-family: "Formula1", var(--font-primary);
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .filter-checkbox-item:hover {
@@ -3582,17 +3621,20 @@ a {
 }
 
 .legend-chip-code {
-  font-size: 11.5px;
-  font-weight: 900;
+  font-family: "Formula1", var(--font-primary);
+  font-size: 10.5px;
+  font-weight: 700;
   color: #ffffff;
   letter-spacing: 0.04em;
-  width: 28px;
+  width: 32px;
   flex-shrink: 0;
 }
 
 .legend-chip-name {
-  font-size: 11.5px;
-  font-weight: 600;
+  font-family: "Formula1", var(--font-primary);
+  font-size: 10.5px;
+  font-weight: 400;
+  text-transform: uppercase;
   color: var(--f1-text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3637,8 +3679,205 @@ a {
 
 .h2h-battles-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 1180px) {
+  .h2h-battles-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .h2h-battles-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.h2h-faceoff-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--f1-border-strong);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  font-family: "Formula1", var(--font-primary);
+}
+
+.h2h-fo-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--f1-border);
+  background: rgba(8, 9, 14, 0.72);
+}
+
+.h2h-fo-team {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.h2h-fo-team-logo {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.h2h-fo-sessions {
+  font-size: 9.5px;
+  font-weight: 400;
+  color: var(--f1-text-secondary);
+  letter-spacing: 0.04em;
+}
+
+.h2h-fo-stage {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 10px 12px 0;
+  min-height: 144px;
+  gap: 6px;
+}
+
+.h2h-fo-side {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  height: 100%;
+}
+
+.h2h-fo-portrait {
+  position: relative;
+  width: 112px;
+  height: 136px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.h2h-fo-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.h2h-fo-name-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 18px 4px 6px;
+  background: linear-gradient(180deg, transparent 0%, rgba(7, 8, 12, 0.92) 70%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.h2h-fo-first {
+  font-size: 9px;
+  font-weight: 400;
+  color: #e2e6f0;
+  letter-spacing: 0.02em;
+}
+
+.h2h-fo-last {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.h2h-fo-score-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 2px;
+}
+
+.h2h-fo-score {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--f1-text-muted);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.h2h-fo-score.is-lead {
+  color: #ffffff;
+}
+
+.h2h-fo-wins-lbl {
+  font-size: 8.5px;
+  font-weight: 400;
+  color: var(--f1-text-muted);
+  letter-spacing: 0.06em;
+}
+
+.h2h-fo-center-divider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 112px;
+  gap: 6px;
+}
+
+.h2h-fo-red-bar {
+  width: 3px;
+  flex: 1;
+  background: var(--f1-red);
+  border-radius: 2px;
+}
+
+.h2h-fo-vs-tag {
+  font-size: 9px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.06em;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.h2h-fo-bottom-track {
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.h2h-fo-bottom-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+@media (max-width: 640px) {
+  .h2h-fo-portrait {
+    width: 84px;
+    height: 112px;
+  }
+
+  .h2h-fo-last {
+    font-size: 10px;
+  }
+
+  .h2h-fo-score {
+    font-size: 21px;
+  }
 }
 
 .h2h-battle-card {
@@ -3969,6 +4208,206 @@ a {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+/* F1 Broadcast Lap Chart (Bump Chart) */
+.lap-broadcast-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.lap-broadcast-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 16px;
+  background: linear-gradient(90deg, rgba(225, 6, 0, 0.14) 0%, rgba(16, 18, 26, 0.95) 45%, rgba(16, 18, 26, 0.95) 100%);
+  border: 1px solid var(--f1-border-strong);
+  border-left: 3px solid var(--f1-red);
+  border-radius: var(--radius-md);
+  flex-wrap: wrap;
+}
+
+.lap-broadcast-title-left {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.lap-broadcast-kicker {
+  font-family: "Formula1", var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--f1-red);
+  letter-spacing: 0.04em;
+}
+
+.lap-broadcast-gp {
+  font-family: "Formula1", var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.lap-broadcast-lap-counter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "Formula1", var(--font-heading);
+  font-size: 13px;
+  color: var(--f1-text-secondary);
+}
+
+.lap-broadcast-lap-counter strong {
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+
+.lap-broadcast-loc {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.06em;
+}
+
+.lap-broadcast-scroll {
+  width: 100%;
+  overflow-x: auto;
+  background: #0a0b10;
+  border: 1px solid var(--f1-border);
+  border-radius: var(--radius-md);
+  padding: 10px 8px;
+}
+
+.lap-broadcast-svg {
+  width: 100%;
+  min-width: 820px;
+  height: auto;
+  display: block;
+}
+
+.lap-svg-axis-hdr {
+  fill: var(--f1-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.lap-svg-left-code {
+  fill: #ffffff;
+  font-family: "Formula1", var(--font-primary);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lap-svg-rank {
+  fill: var(--f1-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.lap-svg-right-name {
+  fill: #ffffff;
+  font-family: "Formula1", var(--font-primary);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+/* Chart + Right-Side Driver Legend Rail (DriverForm & PointsProgression) */
+.chart-with-side-legend {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  padding-top: 8px;
+}
+
+.chart-canvas-flex {
+  flex: 1;
+  min-width: 0;
+}
+
+.chart-side-legend-rail {
+  width: 210px;
+  flex-shrink: 0;
+  max-height: 440px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 12px;
+  border-left: 1px solid var(--f1-border);
+}
+
+.chart-side-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 5px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: var(--transition);
+}
+
+.chart-side-legend-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.chart-side-legend-row.muted {
+  opacity: 0.28;
+}
+
+.chart-side-logo {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.chart-side-name {
+  font-family: "Formula1", var(--font-primary);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #ffffff;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chart-side-val {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--f1-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 820px) {
+  .chart-with-side-legend {
+    flex-direction: column;
+  }
+
+  .chart-side-legend-rail {
+    width: 100%;
+    max-height: none;
+    border-left: none;
+    border-top: 1px solid var(--f1-border);
+    padding-left: 0;
+    padding-top: 12px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
 }
 
 /* Utility Helpers */

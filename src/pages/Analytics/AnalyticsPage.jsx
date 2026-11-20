@@ -16,6 +16,28 @@ import {
   TablePanelSkeleton,
 } from "../../components/common/Skeleton";
 import { getTeamColor } from "../../utils/teamColors";
+import {
+  DEFAULT_DRIVER_SILHOUETTE,
+  getDriverHeadshot,
+  getTeamLogo,
+} from "../../utils/f1Assets";
+
+const METRIC_TITLES = {
+  "biggest-movers": "GREATEST COMEBACKS & POSITIONS GAINED",
+  "pit-stops-eff": "PIT STOP EFFICIENCY & DURATION BY TEAM",
+  "teammate-quali": "TEAMMATE QUALIFYING BATTLES",
+  "driver-form": "DRIVER ROLLING FORM",
+  "points-progression": "CUMULATIVE SEASON POINTS TRAJECTORY",
+  "pole-to-win": "POLE-TO-WIN CONVERSION RATE",
+  "dnf-circuits": "HIGH DNF & INCIDENT-PRONE TRACKS",
+  "deep-grid-wins": "MIRACLE WINS FROM DEEPEST GRID",
+  "most-laps-led": "ALL-TIME LAPS LED",
+  "fastest-speeds": "FASTEST RACE SPEED TRAPS RECORDED IN HISTORY",
+  "all-time-winners": "ALL-TIME GRAND PRIX WINNERS",
+  "constructor-one-twos": "CONSTRUCTOR 1-2 FINISHES IN HISTORY",
+  "youngest-winners": "YOUNGEST RACE WINNERS IN F1 HISTORY",
+  "circuit-masters": "KING OF THE CIRCUIT",
+};
 
 const METRIC_DESCRIPTIONS = {
   "biggest-movers":
@@ -25,7 +47,7 @@ const METRIC_DESCRIPTIONS = {
   "teammate-quali":
     "Head-to-head qualifying battle comparing teammates driving the same car.",
   "driver-form":
-    "Rolling form tracking points scored across each driver's recent Grands Prix.",
+    "5-race moving average tracking the average points scored across each driver's last 5 Grands Prix.",
   "points-progression":
     "Cumulative championship points trajectory round-by-round throughout the season.",
   "pole-to-win":
@@ -157,15 +179,16 @@ export default function AnalyticsPage() {
     return Object.entries(byTeam).map(([teamName, drivers]) => {
       const d1 = drivers[0] || {};
       const d2 = drivers[1] || {};
+      const d1Wins = Number(d1.outqualified_teammate_count ?? 0);
+      const d2Wins = Number(d2.outqualified_teammate_count ?? 0);
+      const h2hTotal = d1Wins + d2Wins;
       return {
         team_name: teamName,
         driver_1: d1.driver_name || "-",
         driver_2: d2.driver_name || "Teammate",
-        d1Wins: Number(d1.outqualified_teammate_count ?? 0),
-        d2Wins: Number(d2.outqualified_teammate_count ?? 0),
-        meta: d1.total_sessions_entered
-          ? `${d1.total_sessions_entered} QUALI SESSIONS`
-          : null,
+        d1Wins,
+        d2Wins,
+        meta: h2hTotal > 0 ? `${h2hTotal} H2H SESSIONS` : null,
       };
     });
   }, [seasonalData]);
@@ -186,47 +209,129 @@ export default function AnalyticsPage() {
             const teamColor = getTeamColor(t.team_name);
             const total = t.d1Wins + t.d2Wins || 1;
             const d1Pct = Math.round((t.d1Wins / total) * 100);
+            const logoUrl = getTeamLogo(t.team_name, season);
+
+            const splitName = (fullName) => {
+              const parts = String(fullName || "-").trim().split(/\s+/);
+              if (parts.length <= 1) return { first: "", last: parts[0] || "-" };
+              return {
+                first: parts.slice(0, -1).join(" "),
+                last: parts[parts.length - 1],
+              };
+            };
+
+            const d1 = splitName(t.driver_1);
+            const d2 = splitName(t.driver_2);
+            const d1Photo = getDriverHeadshot(t.driver_1, null, season);
+            const d2Photo = getDriverHeadshot(t.driver_2, null, season);
 
             return (
               <div
                 key={idx}
-                className="h2h-battle-card"
-                style={{ borderColor: `${teamColor}44` }}
+                className="h2h-faceoff-card"
+                style={{
+                  borderColor: `${teamColor}44`,
+                  background: `radial-gradient(circle at 18% 55%, ${teamColor}22 0%, transparent 45%), radial-gradient(circle at 82% 55%, ${teamColor}22 0%, transparent 45%), #0c0d12`,
+                }}
               >
-                <div className="h2h-card-top">
-                  <TeamBadge name={t.team_name} season={season} size={22} />
-                  {t.meta && (
-                    <span className="f1-minimal-pill">{t.meta}</span>
-                  )}
+                {/* Top Team Bar */}
+                <div className="h2h-fo-top">
+                  <span className="h2h-fo-team">
+                    {logoUrl && (
+                      <img
+                        src={logoUrl}
+                        alt={t.team_name}
+                        className="h2h-fo-team-logo"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    )}
+                    <span>{t.team_name}</span>
+                  </span>
+                  <span className="h2h-fo-sessions">
+                    {t.meta || "QUALI H2H"}
+                  </span>
                 </div>
 
-                <div className="h2h-drivers-row">
-                  <div className="h2h-side h2h-left">
-                    <DriverBadge
-                      name={t.driver_1}
-                      team={t.team_name}
-                      season={season}
-                      size={32}
-                    />
-                    <strong className="h2h-score-num">{t.d1Wins}</strong>
+                {/* Face-Off Body */}
+                <div className="h2h-fo-stage">
+                  {/* Left Driver */}
+                  <div className="h2h-fo-side h2h-fo-left">
+                    <div className="h2h-fo-portrait">
+                      <img
+                        src={d1Photo || DEFAULT_DRIVER_SILHOUETTE}
+                        alt={t.driver_1}
+                        onError={(e) => {
+                          e.currentTarget.src = DEFAULT_DRIVER_SILHOUETTE;
+                        }}
+                      />
+                      <div className="h2h-fo-name-overlay">
+                        {d1.first && (
+                          <span className="h2h-fo-first">{d1.first}</span>
+                        )}
+                        <span
+                          className="h2h-fo-last"
+                          style={{ color: teamColor }}
+                        >
+                          {d1.last}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h2h-fo-score-box">
+                      <span
+                        className={`h2h-fo-score ${t.d1Wins >= t.d2Wins ? "is-lead" : ""}`}
+                      >
+                        {t.d1Wins}
+                      </span>
+                      <span className="h2h-fo-wins-lbl">WINS</span>
+                    </div>
                   </div>
 
-                  <div className="h2h-vs-divider">VS</div>
+                  {/* Center Red Split */}
+                  <div className="h2h-fo-center-divider">
+                    <span className="h2h-fo-red-bar" />
+                    <span className="h2h-fo-vs-tag">H2H</span>
+                    <span className="h2h-fo-red-bar" />
+                  </div>
 
-                  <div className="h2h-side h2h-right">
-                    <strong className="h2h-score-num">{t.d2Wins}</strong>
-                    <DriverBadge
-                      name={t.driver_2}
-                      team={t.team_name}
-                      season={season}
-                      size={32}
-                    />
+                  {/* Right Driver */}
+                  <div className="h2h-fo-side h2h-fo-right">
+                    <div className="h2h-fo-score-box">
+                      <span
+                        className={`h2h-fo-score ${t.d2Wins >= t.d1Wins ? "is-lead" : ""}`}
+                      >
+                        {t.d2Wins}
+                      </span>
+                      <span className="h2h-fo-wins-lbl">WINS</span>
+                    </div>
+                    <div className="h2h-fo-portrait">
+                      <img
+                        src={d2Photo || DEFAULT_DRIVER_SILHOUETTE}
+                        alt={t.driver_2}
+                        onError={(e) => {
+                          e.currentTarget.src = DEFAULT_DRIVER_SILHOUETTE;
+                        }}
+                      />
+                      <div className="h2h-fo-name-overlay">
+                        {d2.first && (
+                          <span className="h2h-fo-first">{d2.first}</span>
+                        )}
+                        <span
+                          className="h2h-fo-last"
+                          style={{ color: teamColor }}
+                        >
+                          {d2.last}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="h2h-bar-track">
+                {/* Bottom Split Progress */}
+                <div className="h2h-fo-bottom-track">
                   <div
-                    className="h2h-bar-fill"
+                    className="h2h-fo-bottom-fill"
                     style={{
                       width: `${d1Pct}%`,
                       backgroundColor: teamColor,
@@ -371,9 +476,12 @@ export default function AnalyticsPage() {
         <div className="panel-header-bar">
           <div className="panel-title-group">
             <h3 className="panel-title" id="analytics-card-title">
-              {category === "seasonal"
-                ? seasonalMetric.replace(/-/g, " ").toUpperCase()
-                : historicalMetric.replace(/-/g, " ").toUpperCase()}
+              {METRIC_TITLES[
+                category === "seasonal" ? seasonalMetric : historicalMetric
+              ] ||
+                (category === "seasonal"
+                  ? seasonalMetric.replace(/-/g, " ").toUpperCase()
+                  : historicalMetric.replace(/-/g, " ").toUpperCase())}
             </h3>
             <p className="panel-subtitle-desc" id="analytics-card-desc">
               {

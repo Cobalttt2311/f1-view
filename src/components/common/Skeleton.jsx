@@ -83,15 +83,10 @@ export function CardGridSkeleton({
   );
 }
 
-export function ChartSkeleton() {
+export function ChartSkeleton({ height = 420 }) {
   return (
     <div className="f1-skeleton-chart-wrap" aria-hidden="true">
-      <div className="f1-chart-legend-grid">
-        {Array.from({ length: 12 }).map((_, idx) => (
-          <SkeletonBox key={idx} width="100%" height={30} borderRadius={6} />
-        ))}
-      </div>
-      <SkeletonBox width="100%" height={380} borderRadius={10} />
+      <SkeletonBox width="100%" height={height} borderRadius={10} />
     </div>
   );
 }

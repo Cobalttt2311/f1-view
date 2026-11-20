@@ -1,20 +1,10 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import F1Select from "../../components/common/F1Select";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
-import { Line } from "react-chartjs-2";
 import { useSeason } from "../../context/SeasonContext";
 import { F1Api, toArray } from "../../api/client";
 import { ChartSkeleton } from "../../components/common/Skeleton";
+import { CountryFlag } from "../../utils/flags";
 import { getTeamLogo } from "../../utils/f1Assets";
 import {
   getDriverCode,
@@ -23,15 +13,22 @@ import {
 } from "../../utils/teamColors";
 import DriverBadge from "../../components/common/DriverBadge";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+function formatOrdinalShort(n) {
+  const num = Number(n);
+  if (!num || Number.isNaN(num)) return "";
+  const mod100 = num % 100;
+  if (mod100 >= 11 && mod100 <= 13) return `${num}th`;
+  switch (num % 10) {
+    case 1:
+      return `${num}st`;
+    case 2:
+      return `${num}nd`;
+    case 3:
+      return `${num}rd`;
+    default:
+      return `${num}th`;
+  }
+}
 
 export default function LapChart() {
   const { season } = useSeason();
@@ -184,66 +181,73 @@ export default function LapChart() {
       ? "All"
       : `${selectedCount}/${totalDrivers}`;
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    layout: {
-      padding: {
-        top: 12,
-        right: 12,
-        bottom: 8,
-        left: 4,
-      },
-    },
-    interaction: { mode: "index", intersect: false },
-    scales: {
-      x: {
-        grid: { color: "rgba(255, 255, 255, 0.04)" },
-        ticks: {
-          color: "#7a7f94",
-          font: { family: "'Titillium Web', sans-serif", size: 11, weight: "600" },
-        },
-      },
-      y: {
-        reverse: true,
-        min: 0.5,
-        max: chartData ? chartData.maxPosition + 0.5 : 20.5,
-        afterBuildTicks: (axis) => {
-          const maxPos = chartData ? chartData.maxPosition : 20;
-          axis.ticks = Array.from({ length: maxPos }, (_, i) => ({
-            value: i + 1,
-          }));
-        },
-        grid: { color: "rgba(255, 255, 255, 0.04)" },
-        ticks: {
-          color: "#7a7f94",
-          font: { family: "'Titillium Web', sans-serif", size: 11, weight: "700" },
-          stepSize: 1,
-          callback: (val) => (Number.isInteger(val) && val >= 1 ? `P${val}` : ""),
-        },
-      },
-    },
-    plugins: {
-      legend: {
-        display: false, // Using aligned custom HTML telemetry legend grid
-      },
-      tooltip: {
-        backgroundColor: "#0e0f15",
-        borderColor: "rgba(255,255,255,0.12)",
-        borderWidth: 1,
-        titleFont: { family: "'Titillium Web', sans-serif", size: 13, weight: "700" },
-        bodyFont: { family: "'Titillium Web', sans-serif", size: 12, weight: "600" },
-        callbacks: {
-          label: (context) => `${context.dataset.label}: P${context.parsed.y}`,
-        },
-      },
-    },
-  };
+  const [hoveredDriver, setHoveredDriver] = useState(null);
+
+  const broadcastLayout = useMemo(() => {
+    if (!chartData || chartData.driverNames.length === 0) return null;
+    const { driverNames, driverMap, maxLap } = chartData;
+
+    const resultRankMap = {};
+    raceResults.forEach((r, idx) => {
+      const rank = Number(r.finish_position ?? r.position ?? idx + 1);
+      if (r.driver_name) resultRankMap[r.driver_name] = rank;
+      if (r.driver_code) resultRankMap[r.driver_code] = rank;
+    });
+
+    const enriched = driverNames.map((name) => {
+      const d = driverMap[name];
+      const lapNums = Object.keys(d.positions)
+        .map(Number)
+        .sort((a, b) => a - b);
+      const firstLap = lapNums[0] ?? 1;
+      const lastLap = lapNums[lapNums.length - 1] ?? 1;
+      const startPos = d.positions[firstLap] ?? 99;
+      const endPos = d.positions[lastLap] ?? 99;
+      const finalRank =
+        resultRankMap[name] ?? resultRankMap[d.code] ?? endPos;
+      const isDnf = lastLap < maxLap;
+
+      return {
+        name,
+        ...d,
+        lapNums,
+        firstLap,
+        lastLap,
+        startPos,
+        endPos,
+        finalRank,
+        isDnf,
+      };
+    });
+
+    const leftOrdered = [...enriched].sort(
+      (a, b) => a.startPos - b.startPos || a.finalRank - b.finalRank
+    );
+    const rightOrdered = [...enriched].sort(
+      (a, b) =>
+        Number(a.isDnf) - Number(b.isDnf) ||
+        b.lastLap - a.lastLap ||
+        a.endPos - b.endPos ||
+        a.finalRank - b.finalRank
+    );
+
+    const rowCount = Math.max(enriched.length, chartData.maxPosition || 20);
+    return {
+      enriched,
+      leftOrdered,
+      rightOrdered,
+      maxLap,
+      rowCount,
+    };
+  }, [chartData, raceResults]);
 
   const applyTopPreset = (count) => {
     if (!chartData) return;
+    const ordered =
+      broadcastLayout?.rightOrdered?.map((d) => d.name) ||
+      chartData.driverNames;
     const next = {};
-    chartData.driverNames.forEach((d, idx) => {
+    ordered.forEach((d, idx) => {
       next[d] = idx < count;
     });
     setSelectedDrivers(next);
@@ -272,75 +276,6 @@ export default function LapChart() {
               label: r.grand_prix_name,
             }))}
           />
-
-          {/* Driver Checkbox Filter Dropdown */}
-          <div
-            ref={filterRef}
-            className={`driver-filter-dropdown-container ${isFilterOpen ? "active" : ""}`}
-          >
-            <button
-              id="driver-filter-toggle-btn"
-              type="button"
-              className="f1-select driver-filter-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsFilterOpen((prev) => !prev);
-              }}
-            >
-              <span className="driver-filter-btn-left">
-                <span>Drivers ({filterLabel})</span>
-              </span>
-              <i
-                className="fa-solid fa-chevron-down"
-                style={{ fontSize: "10px", marginLeft: "6px" }}
-              ></i>
-            </button>
-
-            <div
-              className={`driver-filter-menu ${isFilterOpen ? "active" : ""}`}
-              id="driver-filter-menu"
-              style={{ display: isFilterOpen ? "block" : "none" }}
-            >
-              <div className="filter-menu-header">
-                <span>FILTER DRIVERS</span>
-                <div className="filter-actions">
-                  <button
-                    type="button"
-                    className="btn-text-action"
-                    onClick={() => setAllDrivers(true)}
-                  >
-                    All
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-text-action"
-                    onClick={() => setAllDrivers(false)}
-                  >
-                    Clear
-                  </button>
-                </div>
-              </div>
-              <div className="filter-checkbox-list" id="driver-checkbox-list">
-                {chartData &&
-                  chartData.driverNames.map((name) => (
-                    <label key={name} className="filter-checkbox-item">
-                      <input
-                        type="checkbox"
-                        checked={selectedDrivers[name] !== false}
-                        onChange={() => toggleDriver(name)}
-                      />
-                      <DriverBadge
-                        name={name}
-                        code={chartData.driverMap[name]?.code}
-                        team={chartData.driverMap[name]?.team}
-                        season={season}
-                        size={22}
-                      />
-                    </label>
-                  ))}
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -357,81 +292,335 @@ export default function LapChart() {
                 : "P1 to P20 Track Position History"}
             </p>
           </div>
-          {chartData && (
-            <div className="filter-actions">
-              <button
-                type="button"
-                className="f1-row-action-btn"
-                onClick={() => applyTopPreset(5)}
-              >
-                Top 5
-              </button>
-              <button
-                type="button"
-                className="f1-row-action-btn"
-                onClick={() => applyTopPreset(10)}
-              >
-                Top 10
-              </button>
-              <button
-                type="button"
-                className="f1-row-action-btn"
-                onClick={() => setAllDrivers(true)}
-              >
-                Show All
-              </button>
-              <button
-                type="button"
-                className="f1-row-action-btn"
-                onClick={() => setAllDrivers(false)}
-              >
-                Hide All
-              </button>
-            </div>
-          )}
         </div>
 
         <div className="p-3">
           {isLoading ? (
             <ChartSkeleton />
-          ) : chartData && chartData.datasets.length > 0 ? (
+          ) : broadcastLayout ? (
             <div className="f1-telemetry-chart-block">
-              <div className="f1-chart-legend-grid">
-                {chartData.driverNames.map((name) => {
-                  const d = chartData.driverMap[name];
-                  const active = selectedDrivers[name] !== false;
-                  return (
+              <div className="f1-chart-controls-bar">
+                <div className="f1-chart-controls-left">
+                  <div
+                    ref={filterRef}
+                    className={`driver-filter-dropdown-container ${isFilterOpen ? "active" : ""}`}
+                  >
                     <button
-                      key={name}
+                      id="driver-filter-toggle-btn"
                       type="button"
-                      className={`f1-chart-legend-chip ${active ? "active" : "muted"}`}
-                      onClick={() => toggleDriver(name)}
-                      title={`${d.fullName}${d.team ? ` — ${d.team}` : ""}`}
+                      className="f1-select driver-filter-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsFilterOpen((prev) => !prev);
+                      }}
                     >
-                      <span
-                        className="legend-chip-color-bar"
-                        style={{ backgroundColor: d.color }}
-                      />
-                      <span className="legend-chip-code">{d.code}</span>
-                      <span className="legend-chip-name">{d.lastName}</span>
-                      {d.team && getTeamLogo(d.team) && (
-                        <img
-                          src={getTeamLogo(d.team)}
-                          alt={d.team}
-                          className="legend-chip-team-logo"
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                          }}
-                        />
-                      )}
+                      <span className="driver-filter-btn-left">
+                        <span>Drivers ({filterLabel})</span>
+                      </span>
+                      <i
+                        className="fa-solid fa-chevron-down"
+                        style={{ fontSize: "10px", marginLeft: "6px" }}
+                      ></i>
                     </button>
-                  );
-                })}
+
+                    <div
+                      className={`driver-filter-menu ${isFilterOpen ? "active" : ""}`}
+                      id="driver-filter-menu"
+                      style={{ display: isFilterOpen ? "block" : "none" }}
+                    >
+                      <div className="filter-menu-header">
+                        <span>FILTER DRIVERS</span>
+                        <div className="filter-actions">
+                          <button
+                            type="button"
+                            className="btn-text-action"
+                            onClick={() => setAllDrivers(true)}
+                          >
+                            All
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-text-action"
+                            onClick={() => setAllDrivers(false)}
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      </div>
+                      <div className="filter-checkbox-list" id="driver-checkbox-list">
+                        {chartData &&
+                          chartData.driverNames.map((name) => (
+                            <label key={name} className="filter-checkbox-item">
+                              <input
+                                type="checkbox"
+                                checked={selectedDrivers[name] !== false}
+                                onChange={() => toggleDriver(name)}
+                              />
+                              <DriverBadge
+                                name={name}
+                                label={(chartData.driverMap[name]?.lastName || name).toUpperCase()}
+                                code={chartData.driverMap[name]?.code}
+                                team={chartData.driverMap[name]?.team}
+                                season={season}
+                                size={22}
+                              />
+                            </label>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="filter-actions">
+                  <button
+                    type="button"
+                    className="f1-row-action-btn"
+                    onClick={() => applyTopPreset(5)}
+                  >
+                    Top 5
+                  </button>
+                  <button
+                    type="button"
+                    className="f1-row-action-btn"
+                    onClick={() => applyTopPreset(10)}
+                  >
+                    Top 10
+                  </button>
+                  <button
+                    type="button"
+                    className="f1-row-action-btn"
+                    onClick={() => setAllDrivers(true)}
+                  >
+                    Show All
+                  </button>
+                  <button
+                    type="button"
+                    className="f1-row-action-btn"
+                    onClick={() => setAllDrivers(false)}
+                  >
+                    Hide All
+                  </button>
+                </div>
               </div>
 
-              <div className="chart-wrapper" style={{ height: "540px" }}>
-                <Line data={chartData} options={chartOptions} />
+              <div className="lap-broadcast-card">
+              {/* F1 Broadcast SVG Bump Chart */}
+              <div className="lap-broadcast-scroll">
+                {(() => {
+                  const rowH = 24;
+                  const topPad = 36;
+                  const bottomPad = 18;
+                  const svgH =
+                    topPad + broadcastLayout.rowCount * rowH + bottomPad;
+                  const svgW = 1140;
+                  const plotLeft = 86;
+                  const plotRight = 936;
+                  const plotW = plotRight - plotLeft;
+                  const maxLap = Math.max(1, broadcastLayout.maxLap);
+
+                  const xForLap = (lap) =>
+                    maxLap === 1
+                      ? plotLeft
+                      : plotLeft + ((lap - 1) / (maxLap - 1)) * plotW;
+                  const yForPos = (pos) => topPad + (pos - 0.5) * rowH;
+
+                  // Build lap ticks: 1, 5, 10, ..., maxLap
+                  const lapTicks = [1];
+                  for (let l = 5; l < maxLap; l += 5) lapTicks.push(l);
+                  if (maxLap > 1 && lapTicks[lapTicks.length - 1] !== maxLap) {
+                    lapTicks.push(maxLap);
+                  }
+
+                  return (
+                    <svg
+                      viewBox={`0 0 ${svgW} ${svgH}`}
+                      className="lap-broadcast-svg"
+                      role="img"
+                      aria-label="Formula 1 Race Classification Lap Chart"
+                    >
+                      {/* Top Column Labels */}
+                      <text
+                        x={8}
+                        y={20}
+                        className="lap-svg-axis-hdr"
+                        textAnchor="start"
+                      >
+                        LAP
+                      </text>
+                      {lapTicks.map((l) => (
+                        <text
+                          key={l}
+                          x={xForLap(l)}
+                          y={20}
+                          className="lap-svg-axis-hdr"
+                          textAnchor="middle"
+                        >
+                          {l}
+                        </text>
+                      ))}
+                      <text
+                        x={960}
+                        y={20}
+                        className="lap-svg-axis-hdr"
+                        textAnchor="start"
+                      >
+                        FINISH
+                      </text>
+
+                      {/* Horizontal Guide Lines */}
+                      {Array.from({ length: broadcastLayout.rowCount }).map(
+                        (_, idx) => {
+                          const y = yForPos(idx + 1);
+                          return (
+                            <line
+                              key={idx}
+                              x1={plotLeft}
+                              y1={y}
+                              x2={plotRight}
+                              y2={y}
+                              stroke="rgba(255,255,255,0.06)"
+                              strokeWidth="1"
+                            />
+                          );
+                        }
+                      )}
+
+                      {/* Left Start Driver Legend (Color Bar + Team Logo + Code) */}
+                      {broadcastLayout.leftOrdered.map((d, idx) => {
+                        const visible = selectedDrivers[d.name] !== false;
+                        const isDimmed =
+                          !visible ||
+                          (hoveredDriver && hoveredDriver !== d.name);
+                        const y = yForPos(
+                          d.startPos <= broadcastLayout.rowCount
+                            ? d.startPos
+                            : idx + 1
+                        );
+                        const logoUrl = d.team ? getTeamLogo(d.team) : null;
+                        return (
+                          <g
+                            key={`left-${d.name}`}
+                            style={{ cursor: "pointer" }}
+                            opacity={isDimmed ? 0.25 : 1}
+                            onMouseEnter={() => setHoveredDriver(d.name)}
+                            onMouseLeave={() => setHoveredDriver(null)}
+                            onClick={() => toggleDriver(d.name)}
+                          >
+                            <rect
+                              x={8}
+                              y={y - 7}
+                              width={3.5}
+                              height={14}
+                              rx={1.5}
+                              fill={d.color}
+                            />
+                            {logoUrl && (
+                              <image
+                                href={logoUrl}
+                                x={16}
+                                y={y - 7}
+                                width={14}
+                                height={14}
+                                preserveAspectRatio="xMidYMid meet"
+                              />
+                            )}
+                            <text
+                              x={logoUrl ? 35 : 17}
+                              y={y + 4}
+                              className="lap-svg-left-code"
+                            >
+                              {d.code}
+                            </text>
+                          </g>
+                        );
+                      })}
+
+                      {/* Driver Position Lines */}
+                      {broadcastLayout.enriched.map((d) => {
+                        if (selectedDrivers[d.name] === false) return null;
+                        if (d.lapNums.length === 0) return null;
+
+                        const isHighlighted = hoveredDriver === d.name;
+                        const isDimmed =
+                          hoveredDriver && hoveredDriver !== d.name;
+
+                        const points = d.lapNums
+                          .map((l) => `${xForLap(l)},${yForPos(d.positions[l])}`)
+                          .join(" ");
+
+                        const lastX = xForLap(d.lastLap);
+                        const lastY = yForPos(d.endPos);
+
+                        return (
+                          <g
+                            key={`line-${d.name}`}
+                            style={{ cursor: "pointer" }}
+                            onMouseEnter={() => setHoveredDriver(d.name)}
+                            onMouseLeave={() => setHoveredDriver(null)}
+                            onClick={() => toggleDriver(d.name)}
+                          >
+                            <polyline
+                              fill="none"
+                              stroke={d.color}
+                              strokeWidth={isHighlighted ? 3.8 : 2.3}
+                              strokeLinejoin="round"
+                              strokeLinecap="round"
+                              opacity={isDimmed ? 0.14 : 0.95}
+                              points={points}
+                            />
+                            <circle
+                              cx={lastX}
+                              cy={lastY}
+                              r={isHighlighted ? 4.5 : 3.2}
+                              fill={d.color}
+                              opacity={isDimmed ? 0.2 : 1}
+                            />
+                          </g>
+                        );
+                      })}
+
+                      {/* Right Finish Classification */}
+                      {broadcastLayout.rightOrdered.map((d, idx) => {
+                        const visible = selectedDrivers[d.name] !== false;
+                        const isDimmed =
+                          !visible ||
+                          (hoveredDriver && hoveredDriver !== d.name);
+                        const y = yForPos(idx + 1);
+                        return (
+                          <g
+                            key={`right-${d.name}`}
+                            style={{ cursor: "pointer" }}
+                            opacity={isDimmed ? 0.25 : 1}
+                            onMouseEnter={() => setHoveredDriver(d.name)}
+                            onMouseLeave={() => setHoveredDriver(null)}
+                            onClick={() => toggleDriver(d.name)}
+                          >
+                            {!d.isDnf && (
+                              <text
+                                x={960}
+                                y={y + 4}
+                                className="lap-svg-rank"
+                                textAnchor="start"
+                              >
+                                {formatOrdinalShort(idx + 1)}
+                              </text>
+                            )}
+                            <text
+                              x={1004}
+                              y={y + 4}
+                              className="lap-svg-right-name"
+                              textAnchor="start"
+                            >
+                              {d.lastName.toUpperCase()}
+                            </text>
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  );
+                })()}
               </div>
+            </div>
             </div>
           ) : (
             <div className="f1-empty-state">

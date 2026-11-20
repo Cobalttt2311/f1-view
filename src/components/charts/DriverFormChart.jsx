@@ -156,7 +156,8 @@ export default function DriverFormChart({ rawData }) {
     });
 
     return {
-      labels: roundLabels,
+      labels: sortedRounds.map((rnd) => String(rnd)),
+      roundTitles: roundLabels,
       datasets,
       driverNames,
       driversMap,
@@ -208,23 +209,46 @@ export default function DriverFormChart({ rawData }) {
     scales: {
       x: {
         grid: { color: "rgba(255, 255, 255, 0.04)" },
-        ticks: {
-          color: "#7a7f94",
+        title: {
+          display: true,
+          text: "ROUND",
+          align: "center",
+          padding: { top: 8 },
+          color: "#b8bfd1",
           font: {
-            family: "'Titillium Web', sans-serif",
-            size: 11,
-            weight: "600",
+            family: "'Formula1', 'Titillium Web', sans-serif",
+            size: 10,
+            weight: "700",
+          },
+        },
+        ticks: {
+          color: "#b8bfd1",
+          font: {
+            family: "'Formula1', 'Titillium Web', sans-serif",
+            size: 10.5,
+            weight: "400",
           },
         },
       },
       y: {
         grid: { color: "rgba(255, 255, 255, 0.04)" },
-        ticks: {
-          color: "#7a7f94",
+        title: {
+          display: true,
+          text: "POINTS (AVG)",
+          color: "#b8bfd1",
+          padding: { bottom: 6 },
           font: {
-            family: "'Titillium Web', sans-serif",
-            size: 11,
-            weight: "600",
+            family: "'Formula1', 'Titillium Web', sans-serif",
+            size: 10,
+            weight: "700",
+          },
+        },
+        ticks: {
+          color: "#b8bfd1",
+          font: {
+            family: "'Formula1', 'Titillium Web', sans-serif",
+            size: 10.5,
+            weight: "400",
           },
           callback: (v) => `${v} pts`,
         },
@@ -235,21 +259,41 @@ export default function DriverFormChart({ rawData }) {
         display: false, // Using aligned custom HTML telemetry legend grid
       },
       tooltip: {
-        backgroundColor: "#0e0f15",
-        borderColor: "rgba(255,255,255,0.12)",
+        backgroundColor: "rgba(12, 13, 18, 0.96)",
+        borderColor: "rgba(255, 255, 255, 0.16)",
         borderWidth: 1,
+        cornerRadius: 8,
+        caretSize: 0,
+        padding: 12,
+        titleMarginBottom: 8,
+        bodySpacing: 5,
+        usePointStyle: true,
+        boxWidth: 8,
+        boxHeight: 8,
+        boxPadding: 6,
+        itemSort: (a, b) => (b.parsed.y ?? 0) - (a.parsed.y ?? 0),
+        titleColor: "#ffffff",
+        bodyColor: "#e2e6f0",
         titleFont: {
-          family: "'Titillium Web', sans-serif",
-          size: 13,
+          family: "'Formula1', 'Titillium Web', sans-serif",
+          size: 11.5,
           weight: "700",
         },
         bodyFont: {
-          family: "'Titillium Web', sans-serif",
-          size: 12,
-          weight: "600",
+          family: "'Formula1', 'Titillium Web', sans-serif",
+          size: 10.5,
+          weight: "400",
         },
         callbacks: {
-          label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y} pts avg`,
+          title: (items) => `Round ${items?.[0]?.label ?? ""}`,
+          label: (ctx) => {
+            const dName = ctx.dataset.driverName || ctx.dataset.label;
+            const info = chartData.driversMap?.[dName];
+            const shortName = info?.lastName
+              ? info.lastName.toUpperCase()
+              : dName;
+            return ` ${shortName}: ${ctx.parsed.y} pts avg`;
+          },
         },
       },
     },
@@ -316,6 +360,7 @@ export default function DriverFormChart({ rawData }) {
                       />
                       <DriverBadge
                         name={name}
+                        label={(info?.lastName || name).toUpperCase()}
                         code={info?.code}
                         team={info?.team}
                         season={season}
@@ -359,49 +404,51 @@ export default function DriverFormChart({ rawData }) {
             </button>
           </div>
         </div>
-
-        <span className="f1-chart-legend-hint">
-          Click any driver chip below to toggle line
-        </span>
       </div>
 
-      {/* 2. ALIGNED UNIFORM TELEMETRY LEGEND GRID */}
-      <div className="f1-chart-legend-grid">
-        {chartData.driverNames.map((name, idx) => {
-          const d = chartData.driversMap[name];
-          const active = chartData.isDriverActive(name, idx);
-          return (
-            <button
-              key={name}
-              type="button"
-              className={`f1-chart-legend-chip ${active ? "active" : "muted"}`}
-              onClick={() => toggleDriver(name, idx)}
-              title={`${d.fullName}${d.team ? ` — ${d.team}` : ""}`}
-            >
-              <span
-                className="legend-chip-color-bar"
-                style={{ backgroundColor: d.color }}
-              />
-              <span className="legend-chip-code">{d.code}</span>
-              <span className="legend-chip-name">{d.lastName}</span>
-              {d.team && getTeamLogo(d.team) && (
-                <img
-                  src={getTeamLogo(d.team)}
-                  alt={d.team}
-                  className="legend-chip-team-logo"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                  }}
+      {/* 2. CHART CANVAS + RIGHT-SIDE DRIVER LEGEND RAIL */}
+      <div className="chart-with-side-legend">
+        <div className="chart-canvas-flex" style={{ height: "440px" }}>
+          <Line data={chartData} options={options} />
+        </div>
+
+        <div className="chart-side-legend-rail">
+          {chartData.driverNames.map((name, idx) => {
+            const d = chartData.driversMap[name];
+            const active = chartData.isDriverActive(name, idx);
+            const logoUrl = d.team ? getTeamLogo(d.team) : null;
+            return (
+              <button
+                key={name}
+                type="button"
+                className={`chart-side-legend-row ${active ? "active" : "muted"}`}
+                onClick={() => toggleDriver(name, idx)}
+                title={`${d.fullName}${d.team ? ` — ${d.team}` : ""}`}
+              >
+                <span
+                  className="legend-chip-color-bar"
+                  style={{ backgroundColor: d.color }}
                 />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* 3. CHART CANVAS */}
-      <div style={{ height: "430px", width: "100%", paddingTop: "8px" }}>
-        <Line data={chartData} options={options} />
+                {logoUrl && (
+                  <img
+                    src={logoUrl}
+                    alt={d.team}
+                    className="chart-side-logo"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                )}
+                <span className="chart-side-name">
+                  {d.lastName.toUpperCase()}
+                </span>
+                <span className="chart-side-val">
+                  {d.latestAvg !== undefined ? d.latestAvg : ""}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
