@@ -22,6 +22,79 @@ import {
   resolveDriverCode,
 } from "../../utils/f1Assets";
 
+function DashboardDriverCard({ driver, rank, season, onClick }) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const theme = getTeamCardGradient(driver?.team_name);
+  const headshot = driver
+    ? getDriverHeadshot(driver.driver_name, driver.driver_code, season)
+    : null;
+  const parts = String(driver?.driver_name || "").trim().split(/\s+/);
+  const firstName = parts.length > 1 ? parts.slice(0, -1).join(" ") : "";
+  const lastName = parts.length > 1 ? parts[parts.length - 1] : driver?.driver_name || "-";
+
+  return (
+    <div
+      className="leader-spotlight-card f1-halftone-card"
+      style={{
+        background: theme.gradient,
+        borderColor: `${theme.baseColor}55`,
+      }}
+      onClick={onClick}
+    >
+      <div className="leader-card-content">
+        <div className="leader-card-top">
+          <span className="leader-overline">Drivers Standings</span>
+          <span className="leader-pos-tag">P{rank}</span>
+        </div>
+
+        <div className="leader-name-block" id={rank === 1 ? "dash-driver-leader" : undefined}>
+          {driver ? (
+            <>
+              <span className="leader-first-name">{firstName}</span>
+              <span className="leader-last-name">
+                <WikiLink text={lastName} url={driver.driver_wiki_url} />
+              </span>
+            </>
+          ) : (
+            <span className="leader-last-name">-</span>
+          )}
+        </div>
+
+        <p className="leader-team-sub">{driver?.team_name || "-"}</p>
+
+        <div className="leader-metrics-row" id={rank === 1 ? "dash-driver-leader-pts" : undefined}>
+          <div className="leader-metric">
+            <span className="metric-val">
+              <AnimatedNumber value={driver?.total_points ?? 0} />
+            </span>
+            <span className="metric-unit">PTS</span>
+          </div>
+          <div className="leader-metric-divider" />
+          <div className="leader-metric">
+            <span className="metric-val">
+              <AnimatedNumber value={driver?.total_wins ?? 0} />
+            </span>
+            <span className="metric-unit">WINS</span>
+          </div>
+        </div>
+      </div>
+
+      {driver && (
+        <div className="leader-card-visual">
+          <img
+            src={imgFailed ? DEFAULT_DRIVER_SILHOUETTE : headshot}
+            alt={driver.driver_name}
+            className="leader-cutout-img"
+            onError={() => {
+              if (!imgFailed) setImgFailed(true);
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { season } = useSeason();
   const { timezone, formatSessionTime } = useTimezone();
@@ -363,73 +436,17 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* 2. CHAMPIONSHIP LEADERS & SEASON KPI STRIP */}
+      {/* 2. TOP 3 DRIVERS & CONSTRUCTOR LEADER */}
       <div className="dash-leaders-strip">
-        {/* WDC P1 Leader Card */}
-        <div
-          className="leader-spotlight-card f1-halftone-card"
-          style={{
-            background: dLeaderTheme.gradient,
-            borderColor: `${dLeaderTheme.baseColor}55`,
-          }}
-          onClick={() => navigate("/standings")}
-        >
-          <div className="leader-card-content">
-            <div className="leader-card-top">
-              <span className="leader-overline">Drivers Standings</span>
-              <span className="leader-pos-tag">P1</span>
-            </div>
-
-            <div className="leader-name-block" id="dash-driver-leader">
-              {dLeader ? (
-                <>
-                  <span className="leader-first-name">{leaderNames.first}</span>
-                  <span className="leader-last-name">
-                    <WikiLink
-                      text={leaderNames.last}
-                      url={dLeader.driver_wiki_url}
-                    />
-                  </span>
-                </>
-              ) : (
-                <span className="leader-last-name">-</span>
-              )}
-            </div>
-
-            <p className="leader-team-sub">{dLeader?.team_name || "-"}</p>
-
-            <div className="leader-metrics-row" id="dash-driver-leader-pts">
-              <div className="leader-metric">
-                <span className="metric-val">
-                  <AnimatedNumber value={dLeader?.total_points ?? 0} />
-                </span>
-                <span className="metric-unit">PTS</span>
-              </div>
-              <div className="leader-metric-divider" />
-              <div className="leader-metric">
-                <span className="metric-val">
-                  <AnimatedNumber value={dLeader?.total_wins ?? 0} />
-                </span>
-                <span className="metric-unit">WINS</span>
-              </div>
-            </div>
-          </div>
-
-          {dLeader && (
-            <div className="leader-card-visual">
-              <img
-                src={
-                  leaderImgFailed ? DEFAULT_DRIVER_SILHOUETTE : dLeaderHeadshot
-                }
-                alt={dLeader?.driver_name}
-                className="leader-cutout-img"
-                onError={() => {
-                  if (!leaderImgFailed) setLeaderImgFailed(true);
-                }}
-              />
-            </div>
-          )}
-        </div>
+        {[0, 1, 2].map((idx) => (
+          <DashboardDriverCard
+            key={drivers[idx]?.driver_name || `top-driver-${idx}`}
+            driver={drivers[idx]}
+            rank={idx + 1}
+            season={season}
+            onClick={() => navigate("/standings")}
+          />
+        ))}
 
         {/* WCC P1 Constructor Card */}
         <div
@@ -500,48 +517,6 @@ export default function DashboardPage() {
                 />
               </div>
             )}
-          </div>
-        </div>
-
-        {/* KPI Summary 2x2 Grid */}
-        <div className="dash-kpi-pair">
-          <div className="minimal-kpi-box">
-            <span className="kpi-overline">Rounds</span>
-            <strong id="dash-total-races" className="kpi-number">
-              <AnimatedNumber value={races.length} />
-            </strong>
-            <span id="dash-races-sub" className="kpi-sub">
-              {season} Season
-            </span>
-          </div>
-
-          <div className="minimal-kpi-box">
-            <span className="kpi-overline">Completed</span>
-            <strong id="dash-completed-races" className="kpi-number">
-              <AnimatedNumber value={completedRaces} />
-            </strong>
-            <span className="kpi-sub">
-              {remainingRaces > 0 ? `${remainingRaces} Left` : "Finished"}
-            </span>
-          </div>
-
-          <div className="minimal-kpi-box">
-            <span className="kpi-overline">Teams</span>
-            <strong id="dash-active-teams" className="kpi-number">
-              <AnimatedNumber value={constructors.length} />
-            </strong>
-            <span className="kpi-sub">Constructors</span>
-          </div>
-
-          <div className="minimal-kpi-box">
-            <span className="kpi-overline">P1 Lead</span>
-            <strong id="dash-p1-lead" className="kpi-number">
-              <AnimatedNumber
-                value={p1Lead}
-                prefix={p1Lead > 0 ? "+" : ""}
-              />
-            </strong>
-            <span className="kpi-sub">pts Gap</span>
           </div>
         </div>
       </div>

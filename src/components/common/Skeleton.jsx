@@ -94,13 +94,11 @@ export function ChartSkeleton({ height = 420 }) {
 export function ProfileModalSkeleton() {
   return (
     <div className="driver-profile-modal-content" aria-hidden="true">
-      <div className="profile-modal-hero">
-        <div className="profile-modal-info" style={{ flex: 1 }}>
-          <SkeletonBox width="58%" height={26} />
-          <SkeletonBox width="32%" height={14} style={{ marginTop: 10 }} />
-          <SkeletonBox width="48%" height={13} style={{ marginTop: 10 }} />
-        </div>
-        <SkeletonBox width={82} height={82} borderRadius="50%" />
+      <SkeletonBox width="100%" height={156} borderRadius={12} />
+      <div style={{ marginTop: 14, marginBottom: 14 }}>
+        <SkeletonBox width="52%" height={24} />
+        <SkeletonBox width="36%" height={13} style={{ marginTop: 8 }} />
+        <SkeletonBox width="62%" height={13} style={{ marginTop: 8 }} />
       </div>
       <div className="driver-stat-section">
         <div className="driver-stat-pair-grid">

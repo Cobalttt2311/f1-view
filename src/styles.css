@@ -1979,18 +1979,24 @@ table .team-logo-circle {
   filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.7));
 }
 
-/* Dashboard Leaders & KPI Strip */
+/* Dashboard Leaders Strip (Top 3 Drivers + Constructor Leader) */
 .dash-leaders-strip {
   display: grid;
-  grid-template-columns: 1.15fr 1.35fr 0.8fr;
-  gap: 18px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 1200px) {
+  .dash-leaders-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .leader-spotlight-card {
-  padding: 20px 22px;
+  padding: 16px 18px;
   display: flex;
   justify-content: space-between;
-  min-height: 175px;
+  min-height: 152px;
   cursor: pointer;
 }
 
@@ -2088,7 +2094,8 @@ table .team-logo-circle {
 
 .leader-card-visual {
   position: relative;
-  width: 140px;
+  width: 96px;
+  flex-shrink: 0;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
@@ -2096,9 +2103,9 @@ table .team-logo-circle {
 
 .leader-cutout-img {
   position: absolute;
-  bottom: -20px;
+  bottom: -16px;
   right: -6px;
-  height: 165px;
+  height: 136px;
   width: auto;
   object-fit: contain;
   pointer-events: none;
@@ -2134,15 +2141,15 @@ table .team-logo-circle {
 }
 
 .constructor-car-showcase {
-  margin-top: 8px;
-  height: 62px;
+  margin-top: 6px;
+  height: 50px;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
 }
 
 .constructor-car-img {
-  max-height: 64px;
+  max-height: 50px;
   width: auto;
   max-width: 100%;
   object-fit: contain;
@@ -4137,6 +4144,249 @@ table .team-logo-circle {
 
   .driver-stat-val {
     font-size: 20px;
+  }
+}
+
+/* Editorial Circuit & Driver Modal Showcase Cards */
+.f1-circuit-modal-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-bottom: 18px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--f1-border);
+}
+
+.f1-circuit-modal-map-stage {
+  height: 152px;
+  border-radius: 14px;
+  background: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--f1-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.f1-circuit-modal-svg {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.45));
+}
+
+.f1-circuit-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.f1-circuit-modal-country {
+  font-family: "Formula1", var(--font-heading);
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.f1-circuit-modal-name {
+  font-size: 13px;
+  color: var(--f1-text-secondary);
+  margin: 4px 0 0;
+}
+
+.f1-circuit-modal-length {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.f1-circuit-length-num {
+  font-family: "Formula1", var(--font-heading);
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1.4px rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.02em;
+}
+
+.f1-circuit-length-unit {
+  font-family: "Formula1", var(--font-primary);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--f1-text-muted);
+}
+
+.f1-circuit-modal-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--f1-border);
+}
+
+.f1-circuit-metric-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.f1-circuit-metric-val {
+  font-family: "Formula1", var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+
+.f1-circuit-metric-label {
+  font-size: 11.5px;
+  color: var(--f1-text-muted);
+  line-height: 1.35;
+}
+
+.f1-circuit-modal-winners-head {
+  font-family: "Formula1", var(--font-heading);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--f1-text-muted);
+  margin-bottom: 8px;
+}
+
+.f1-driver-modal-hero-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--f1-border);
+  margin-bottom: 8px;
+}
+
+.modal-no-header {
+  position: relative;
+}
+
+.modal-no-header .modal-body {
+  padding-top: 50px;
+}
+
+.modal-close-floating {
+  position: absolute;
+  top: 12px;
+  right: 20px;
+  z-index: 20;
+  background: var(--f1-surface-800);
+}
+
+.f1-driver-modal-banner {
+  position: relative;
+  height: 164px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding-left: 38px;
+}
+
+.f1-driver-modal-portrait {
+  height: 158px;
+  width: auto;
+  object-fit: contain;
+  object-position: bottom center;
+  z-index: 2;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.5));
+}
+
+.f1-driver-modal-team-watermark {
+  position: absolute;
+  top: 14px;
+  right: 46px;
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
+  opacity: 0.22;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.f1-driver-modal-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.f1-driver-modal-name-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.f1-driver-modal-subline {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--f1-text-secondary);
+  margin-top: 3px;
+}
+
+.f1-driver-modal-season-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.f1-driver-season-pos-block,
+.f1-driver-season-pts-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.f1-driver-pos-solid {
+  font-family: "Formula1", var(--font-heading);
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+
+.f1-driver-pts-val {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: "Formula1", var(--font-heading);
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.f1-driver-pts-unit {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--f1-text-muted);
+}
+
+@media (max-width: 600px) {
+  .f1-circuit-modal-metrics {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .f1-driver-modal-banner {
+    height: 140px;
+  }
+
+  .f1-driver-modal-portrait {
+    height: 134px;
   }
 }
 

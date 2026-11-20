@@ -153,6 +153,15 @@ export default function CircuitsPage() {
       name: c.circuit_name,
       country: c.country,
       location: c.location,
+      circuitRef: c.circuitRef,
+      altitude_meters: c.altitude_meters,
+      circuit_wiki_url: c.circuit_wiki_url,
+      first_grand_prix: c.first_grand_prix,
+      number_of_gps: c.number_of_gps,
+      length_km: c.length_km,
+      lap_record_time: c.lap_record_time,
+      lap_record_driver: c.lap_record_driver,
+      lap_record_year: c.lap_record_year,
     });
   };
 
@@ -211,12 +220,129 @@ export default function CircuitsPage() {
         <div className="f1-empty-state">No circuits found.</div>
       )}
 
-      {/* PAST GRAND PRIX WINNERS MODAL (Reference 1 Table Style) */}
+      {/* CIRCUIT DETAIL & PAST GRAND PRIX WINNERS MODAL */}
       <Modal
         isOpen={!!selectedCircuit}
         onClose={() => setSelectedCircuit(null)}
-        title={`Past Grand Prix Winners — ${selectedCircuit?.name || "Circuit"}`}
+        hideHeader
       >
+        {selectedCircuit && (() => {
+          const modalSvgUrl = getCircuitTrackMap(
+            selectedCircuit.name,
+            selectedCircuit.location,
+            selectedCircuit.country,
+            selectedCircuit.id
+          );
+          const modalHeroUrl = getHeroImage(
+            selectedCircuit.name,
+            selectedCircuit.location,
+            selectedCircuit.country,
+            selectedCircuit.id
+          );
+          const lengthText =
+            selectedCircuit.length_km !== undefined &&
+            selectedCircuit.length_km !== null
+              ? Number(selectedCircuit.length_km).toFixed(3)
+              : "-";
+
+          return (
+            <div className="f1-circuit-modal-card">
+              <div
+                className="f1-circuit-modal-map-stage"
+                style={{
+                  backgroundImage: modalHeroUrl
+                    ? `linear-gradient(180deg, rgba(10,11,16,0.58) 0%, rgba(10,11,16,0.82) 100%), url("${modalHeroUrl}")`
+                    : "radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02))",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
+              >
+                {modalSvgUrl ? (
+                  <img
+                    src={modalSvgUrl}
+                    alt={selectedCircuit.name}
+                    className="f1-circuit-modal-svg"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <div className="circuit-card-svg-fallback">
+                    <span>
+                      {selectedCircuit.location ||
+                        selectedCircuit.country ||
+                        "CIRCUIT"}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="f1-circuit-modal-header">
+                <div>
+                  <h3 className="f1-circuit-modal-country">
+                    <WikiLink
+                      text={selectedCircuit.country || selectedCircuit.name}
+                      url={selectedCircuit.circuit_wiki_url}
+                    />
+                  </h3>
+                  <p className="f1-circuit-modal-name">
+                    {selectedCircuit.name}
+                    {selectedCircuit.location
+                      ? ` • ${selectedCircuit.location}`
+                      : ""}
+                  </p>
+                </div>
+                <CountryFlag name={selectedCircuit.country} size={28} />
+              </div>
+
+              <div className="f1-circuit-modal-length">
+                <span className="f1-circuit-length-num">{lengthText}</span>
+                {lengthText !== "-" && (
+                  <span className="f1-circuit-length-unit">KM</span>
+                )}
+              </div>
+
+              <div className="f1-circuit-modal-metrics">
+                <div className="f1-circuit-metric-item">
+                  <strong className="f1-circuit-metric-val">
+                    {selectedCircuit.first_grand_prix ?? "-"}
+                  </strong>
+                  <span className="f1-circuit-metric-label">First GP</span>
+                </div>
+
+                <div className="f1-circuit-metric-item">
+                  <strong className="f1-circuit-metric-val">
+                    {selectedCircuit.number_of_gps ?? 0}
+                  </strong>
+                  <span className="f1-circuit-metric-label">
+                    Number of Grand Prix
+                  </span>
+                </div>
+
+                <div className="f1-circuit-metric-item">
+                  <strong className="f1-circuit-metric-val">
+                    {selectedCircuit.lap_record_time || "-"}
+                  </strong>
+                  <span className="f1-circuit-metric-label">
+                    Lap record
+                    {selectedCircuit.lap_record_driver
+                      ? ` • ${selectedCircuit.lap_record_driver}${
+                          selectedCircuit.lap_record_year
+                            ? ` (${selectedCircuit.lap_record_year})`
+                            : ""
+                        }`
+                      : ""}
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        <div className="f1-circuit-modal-winners-head">
+          <span>PAST GRAND PRIX WINNERS</span>
+        </div>
+
         {loadingHistory ? (
           <TablePanelSkeleton rows={6} cols={5} />
         ) : safeWinnersHistory.length > 0 ? (

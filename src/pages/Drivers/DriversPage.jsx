@@ -13,11 +13,13 @@ import {
 import Pagination from "../../components/common/Pagination";
 import DriverBadge from "../../components/common/DriverBadge";
 import { CountryFlag } from "../../utils/flags";
+import { getTeamColor } from "../../utils/teamColors";
 import { useTableSort } from "../../utils/useTableSort";
 import {
   DEFAULT_DRIVER_SILHOUETTE,
   getDriverHeadshot,
   getTeamCardGradient,
+  getTeamLogo,
   getVerifiedDriverNumber,
   resolveDriverCode,
 } from "../../utils/f1Assets";
@@ -464,89 +466,127 @@ export default function DriversPage({ mode = "grid" }) {
         </div>
       )}
 
-      {/* Driver Career Profile Modal */}
+      {/* Driver Profile Modal */}
       <Modal
         isOpen={!!selectedDriverId}
         onClose={handleCloseModal}
-        title="Driver Career Profile"
+        hideHeader
       >
         {loadingProfile ? (
           <ProfileModalSkeleton />
         ) : activeProfile ? (
-          <div className="driver-profile-modal-content">
-            <div className="profile-modal-hero">
-              <div className="profile-modal-info">
-                <h2 className="profile-modal-name">
-                  <WikiLink
-                    text={activeProfile.full_name}
-                    url={activeProfile.driver_wiki_url}
-                  />
-                </h2>
-                <div className="profile-modal-nation">
-                  <CountryFlag name={activeProfile.nationality} size={20} />
-                  <span>{activeProfile.nationality}</span>
-                </div>
-                <div className="profile-modal-plain-meta">
-                  <span>
-                    Latest Number Driver : {profileNumber || "-"}
-                  </span>
-                  <span>
-                    Date of Birth :{" "}
-                    {activeProfile.birth_date ||
-                      activeProfile.date_of_birth ||
-                      "-"}
-                  </span>
-                </div>
-              </div>
+          (() => {
+            const modalTeamName =
+              activeProfile.season_team ||
+              String(activeProfile.teams_driven_for || "").split(",")[0]?.trim() ||
+              "";
+            const modalTeamColor = modalTeamName
+              ? getTeamColor(modalTeamName)
+              : "#e10600";
+            const modalTeamLogo = modalTeamName
+              ? getTeamLogo(modalTeamName, activeProfile.season_year)
+              : null;
+            const formattedSeasonPos =
+              activeProfile.season_position !== null &&
+              activeProfile.season_position !== undefined
+                ? String(activeProfile.season_position).padStart(2, "0")
+                : "-";
 
-              {profileHeadshot && (
-                <div className="profile-modal-avatar">
-                  <img
-                    src={profileHeadshot}
-                    alt={activeProfile.full_name}
-                    onError={(e) => {
-                      e.currentTarget.src = DEFAULT_DRIVER_SILHOUETTE;
+            return (
+              <div className="driver-profile-modal-content">
+                <div className="f1-driver-modal-hero-card">
+                  <div
+                    className="f1-driver-modal-banner"
+                    style={{
+                      background: `linear-gradient(135deg, ${modalTeamColor}dd 0%, ${modalTeamColor}55 100%)`,
                     }}
-                  />
-                </div>
-              )}
-            </div>
+                  >
+                    {profileHeadshot && (
+                      <img
+                        src={profileHeadshot}
+                        alt={activeProfile.full_name}
+                        className="f1-driver-modal-portrait"
+                        onError={(e) => {
+                          e.currentTarget.src = DEFAULT_DRIVER_SILHOUETTE;
+                        }}
+                      />
+                    )}
+                    {modalTeamLogo && (
+                      <img
+                        src={modalTeamLogo}
+                        alt=""
+                        className="f1-driver-modal-team-watermark"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    )}
+                  </div>
 
-            {/* 1. SEASON SUMMARY (Only shown when opened for a driver in the active season) */}
-            {isSeasonContext && activeProfile.season_year && (
-              <div className="driver-stat-section">
-                <div className="driver-stat-pair-grid">
-                  <div className="driver-stat-cell">
-                    <span className="driver-stat-label">
-                      {activeProfile.season_year} Season Position
-                    </span>
-                    <strong className="driver-stat-val">
-                      {formatOrdinal(activeProfile.season_position)}
-                    </strong>
-                  </div>
-                  <div className="driver-stat-cell">
-                    <span className="driver-stat-label">
-                      {activeProfile.season_year} Season Points
-                    </span>
-                    <strong className="driver-stat-val">
-                      <AnimatedNumber value={activeProfile.season_points ?? 0} />
-                    </strong>
-                  </div>
-                  {activeProfile.season_team && (
-                    <div className="driver-stat-cell driver-stat-span2">
-                      <span className="driver-stat-label">
-                        {activeProfile.season_year} Team
-                      </span>
-                      <strong className="driver-stat-val-sm">
-                        {activeProfile.season_team}
-                      </strong>
+                  <div className="f1-driver-modal-identity">
+                    <div className="f1-driver-modal-name-row">
+                      <div>
+                        <h2 className="profile-modal-name">
+                          <WikiLink
+                            text={activeProfile.full_name}
+                            url={activeProfile.driver_wiki_url}
+                          />
+                        </h2>
+                        <div className="f1-driver-modal-subline">
+                          <span>{profileNumber || "-"}</span>
+                          {modalTeamName && <span> | {modalTeamName}</span>}
+                        </div>
+                      </div>
+                      <CountryFlag name={activeProfile.nationality} size={26} />
                     </div>
-                  )}
-                </div>
-              </div>
-            )}
 
-            {/* 2. FOCUSED CAREER STATISTICS (2-Column Editorial Hairline Grid) */}
+                    <div className="profile-modal-plain-meta">
+                      <span>
+                        Country : {activeProfile.nationality || "-"}
+                      </span>
+                      <span>
+                        Date of Birth :{" "}
+                        {activeProfile.birth_date ||
+                          activeProfile.date_of_birth ||
+                          "-"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 1. SEASON SUMMARY (Only shown when opened for a driver in the active season) */}
+                {isSeasonContext && activeProfile.season_year && (
+                  <div className="driver-stat-section">
+                    <div className="f1-driver-modal-season-hero">
+                      <div className="f1-driver-season-pos-block">
+                        <span className="f1-driver-pos-solid">
+                          {formattedSeasonPos}
+                        </span>
+                        <span className="driver-stat-label">
+                          {activeProfile.season_year} Season Position (
+                          {formatOrdinal(activeProfile.season_position)})
+                        </span>
+                      </div>
+
+                      <div className="f1-driver-season-pts-block">
+                        <div
+                          className="f1-driver-pts-val"
+                          style={{ color: modalTeamColor }}
+                        >
+                          <AnimatedNumber
+                            value={activeProfile.season_points ?? 0}
+                          />
+                          <span className="f1-driver-pts-unit">PTS</span>
+                        </div>
+                        <span className="driver-stat-label">
+                          {activeProfile.season_year} Season Points
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. FOCUSED CAREER STATISTICS (2-Column Editorial Hairline Grid) */}
             <div className="driver-stat-section">
               <div className="driver-stat-pair-grid">
                 <div className="driver-stat-cell">
@@ -627,6 +667,8 @@ export default function DriversPage({ mode = "grid" }) {
               </div>
             </div>
           </div>
+            );
+          })()
         ) : (
           <div className="f1-empty-state">
             No career profile found for this driver.
