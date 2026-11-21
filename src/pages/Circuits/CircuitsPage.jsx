@@ -288,7 +288,7 @@ export default function CircuitsPage() {
                   <p className="f1-circuit-modal-name">
                     {selectedCircuit.name}
                     {selectedCircuit.location
-                      ? ` • ${selectedCircuit.location}`
+                      ? ` | ${selectedCircuit.location}`
                       : ""}
                   </p>
                 </div>
@@ -326,7 +326,7 @@ export default function CircuitsPage() {
                   <span className="f1-circuit-metric-label">
                     Lap record
                     {selectedCircuit.lap_record_driver
-                      ? ` • ${selectedCircuit.lap_record_driver}${
+                      ? ` | ${selectedCircuit.lap_record_driver}${
                           selectedCircuit.lap_record_year
                             ? ` (${selectedCircuit.lap_record_year})`
                             : ""

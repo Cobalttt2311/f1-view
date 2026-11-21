@@ -58,6 +58,63 @@ function formatWeekendRange(race) {
   return endStr || startStr || "-";
 }
 
+function parseSessionTimestamp(dateStr, timeUtcStr) {
+  const d = cleanVal(dateStr);
+  if (!d) return null;
+  let t = cleanVal(timeUtcStr);
+  if (!t) {
+    t = "12:00:00";
+  } else {
+    t = t.replace(/Z$/i, "").split(".")[0];
+    if (/^\d{2}:\d{2}$/.test(t)) t = `${t}:00`;
+  }
+  const ts = new Date(`${d}T${t}Z`).getTime();
+  return Number.isNaN(ts) ? null : ts;
+}
+
+function getWeekendBounds(race) {
+  if (!race) return { start: null, end: null };
+  const dates = [
+    cleanVal(race.fp1_date),
+    cleanVal(race.fp2_date),
+    cleanVal(race.fp3_date),
+    cleanVal(race.sprint_date),
+    cleanVal(race.quali_date),
+    cleanVal(race.race_date),
+  ].filter(Boolean);
+  if (dates.length === 0) return { start: null, end: null };
+  dates.sort();
+  return {
+    start: dates[0],
+    end: cleanVal(race.race_date) || dates[dates.length - 1],
+  };
+}
+
+function getRaceSessionTargets(race) {
+  if (!race) return [];
+  const items = [];
+  const add = (key, label, d, t) => {
+    const ts = parseSessionTimestamp(d, t);
+    if (ts !== null) items.push({ key, label, timestamp: ts, race });
+  };
+  add("fp1", "FP1", race.fp1_date, race.fp1_time_utc);
+  if (!race.has_sprint) {
+    add("fp2", "FP2", race.fp2_date, race.fp2_time_utc);
+    add("fp3", "FP3", race.fp3_date, race.fp3_time_utc);
+  }
+  if (race.has_sprint || cleanVal(race.sprint_date) || cleanVal(race.sprint_time_utc)) {
+    add(
+      "sprint",
+      "Sprint",
+      cleanVal(race.sprint_date) || cleanVal(race.quali_date),
+      race.sprint_time_utc
+    );
+  }
+  add("quali", "Qualifying", race.quali_date, race.quali_time_utc);
+  add("race", "Race", race.race_date, race.race_time_utc);
+  return items.sort((a, b) => a.timestamp - b.timestamp);
+}
+
 export default function CalendarPage() {
   const { season } = useSeason();
   const { timezone, formatSessionTime } = useTimezone();
@@ -77,14 +134,32 @@ export default function CalendarPage() {
   });
   const races = Array.isArray(racesData) ? racesData : [];
 
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayStr = new Date().toLocaleDateString("en-CA");
 
   // Determine next/target race and default selection
   const nextRace = useMemo(() => {
     if (!races || races.length === 0) return null;
-    const upcoming = races.find((r) => r.race_date && r.race_date >= todayStr);
+    const upcoming = races.find((r) => {
+      const bounds = getWeekendBounds(r);
+      return bounds.end && bounds.end >= todayStr;
+    });
     return upcoming || races[races.length - 1];
   }, [races, todayStr]);
+
+  // Determine the next upcoming session (FP1, FP2, FP3, Sprint, Qualifying, Race)
+  const nextSession = useMemo(() => {
+    if (!races || races.length === 0) return null;
+    const now = Date.now();
+    const allUpcoming = [];
+    for (const r of races) {
+      const sessions = getRaceSessionTargets(r);
+      for (const s of sessions) {
+        if (s.timestamp > now) allUpcoming.push(s);
+      }
+    }
+    allUpcoming.sort((a, b) => a.timestamp - b.timestamp);
+    return allUpcoming[0] || null;
+  }, [races]);
 
   useEffect(() => {
     if (races.length > 0) {
@@ -107,14 +182,14 @@ export default function CalendarPage() {
     setHeroFailed(false);
   }, [activeRace?.round, season]);
 
-  // Live countdown to nextRace
-  const [countdownStr, setCountdownStr] = useState("00:00:00");
+  // Live countdown to nextSession
+  const [countdownStr, setCountdownStr] = useState("COMPLETED");
   useEffect(() => {
-    if (!nextRace || !nextRace.race_date) {
-      setCountdownStr("--:--:--");
+    if (!nextSession || !nextSession.timestamp) {
+      setCountdownStr("COMPLETED");
       return;
     }
-    const targetTime = new Date(`${nextRace.race_date}T12:00:00Z`).getTime();
+    const targetTime = nextSession.timestamp;
     const getHMS = () => {
       const diff = targetTime - Date.now();
       if (diff <= 0) return null;
@@ -171,7 +246,7 @@ export default function CalendarPage() {
       if (rafId) cancelAnimationFrame(rafId);
       clearInterval(timer);
     };
-  }, [nextRace]);
+  }, [nextSession]);
 
   const activeSvgUrl = activeRace
     ? getCircuitTrackMap(
@@ -291,13 +366,15 @@ export default function CalendarPage() {
                 <span className="cal-season-sub">{season} Season</span>
               </div>
 
-              {nextRace && (
+              {nextSession && countdownStr !== "COMPLETED" ? (
                 <div className="cal-next-countdown-mini">
                   <div className="cal-next-meta">
-                    <span className="cal-next-lbl">Next Session</span>
+                    <span className="cal-next-lbl">
+                      Next Session | {nextSession.label}
+                    </span>
                     <strong className="cal-next-timer">{countdownStr}</strong>
                     <span className="cal-next-gp-sub">
-                      {nextRace.grand_prix_name}
+                      {nextSession.race.grand_prix_name}
                     </span>
                   </div>
                   {nextRaceSvgUrl && (
@@ -311,6 +388,14 @@ export default function CalendarPage() {
                     />
                   )}
                 </div>
+              ) : (
+                <div className="cal-next-countdown-mini">
+                  <div className="cal-next-meta">
+                    <strong className="cal-next-timer is-completed">
+                      COMPLETED
+                    </strong>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -318,11 +403,20 @@ export default function CalendarPage() {
               {races.map((r) => {
                 const isSelected =
                   activeRace && Number(r.round) === Number(activeRace.round);
-                const isCompleted = r.race_date && r.race_date < todayStr;
+                const bounds = getWeekendBounds(r);
+                const isLive = Boolean(
+                  bounds.start &&
+                    bounds.end &&
+                    todayStr >= bounds.start &&
+                    todayStr <= bounds.end
+                );
+                const isCompleted =
+                  !isLive && r.race_date && r.race_date < todayStr;
                 const isNext =
+                  !isLive &&
+                  !isCompleted &&
                   nextRace &&
-                  Number(r.round) === Number(nextRace.round) &&
-                  !isCompleted;
+                  Number(r.round) === Number(nextRace.round);
 
                 return (
                   <div
@@ -358,18 +452,30 @@ export default function CalendarPage() {
                     <div className="cal-round-status-col">
                       <span
                         className={`cal-round-status-text ${
-                          isNext
-                            ? "is-next"
-                            : isCompleted
-                              ? "is-completed"
-                              : "is-upcoming"
+                          isLive
+                            ? "is-live"
+                            : isNext
+                              ? "is-next"
+                              : isCompleted
+                                ? "is-completed"
+                                : "is-upcoming"
                         }`}
                       >
-                        {isNext
-                          ? "Next"
-                          : isCompleted
-                            ? "Completed"
-                            : "Scheduled"}
+                        {isLive ? (
+                          <>
+                            <i
+                              className="fa-solid fa-flag-checkered"
+                              aria-hidden="true"
+                            ></i>
+                            <span>RACE WEEK</span>
+                          </>
+                        ) : isNext ? (
+                          "Next"
+                        ) : isCompleted ? (
+                          "Completed"
+                        ) : (
+                          "Scheduled"
+                        )}
                       </span>
                       <span className="cal-round-date-str">
                         {formatWeekendRange(r)}

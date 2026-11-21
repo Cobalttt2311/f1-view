@@ -582,8 +582,12 @@ export default function DashboardPage() {
                               url={r.race_wiki_url}
                             />
                             {isLive && (
-                              <span className="f1-minimal-pill pill-accent">
-                                LIVE
+                              <span
+                                className="f1-live-flag-icon"
+                                title="Race Week"
+                                aria-label="Race Week"
+                              >
+                                <i className="fa-solid fa-flag-checkered"></i>
                               </span>
                             )}
                           </div>
