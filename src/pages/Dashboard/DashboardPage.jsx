@@ -368,7 +368,9 @@ export default function DashboardPage() {
               <button
                 type="button"
                 className="f1-btn-primary"
-                onClick={() => navigate("/weekend-hub")}
+                onClick={() =>
+                  navigate(`/weekend-hub?round=${targetRace.round}`)
+                }
               >
                 <span>Open Race Weekend Hub</span>
                 <i className="fa-solid fa-arrow-right"></i>

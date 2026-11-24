@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import F1Select from "../../components/common/F1Select";
 import { useQuery } from "@tanstack/react-query";
 import { useSeason } from "../../context/SeasonContext";
@@ -32,7 +33,17 @@ function formatOrdinalShort(n) {
 
 export default function LapChart() {
   const { season } = useSeason();
-  const [selectedRound, setSelectedRound] = useState(1);
+  const [searchParams] = useSearchParams();
+  const roundParam = Number(searchParams.get("round"));
+  const [selectedRound, setSelectedRound] = useState(
+    roundParam > 0 ? roundParam : 1
+  );
+
+  useEffect(() => {
+    if (roundParam > 0) {
+      setSelectedRound(roundParam);
+    }
+  }, [roundParam]);
   const [selectedDrivers, setSelectedDrivers] = useState({});
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterRef = useRef(null);

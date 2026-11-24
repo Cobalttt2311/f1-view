@@ -602,7 +602,9 @@ export default function CalendarPage() {
                       <button
                         type="button"
                         className="f1-btn-primary w-100"
-                        onClick={() => navigate("/weekend-hub")}
+                        onClick={() =>
+                          navigate(`/weekend-hub?round=${activeRace.round}`)
+                        }
                       >
                         <span>Open Weekend Hub</span>
                         <i className="fa-solid fa-arrow-right"></i>
@@ -610,7 +612,9 @@ export default function CalendarPage() {
                       <button
                         type="button"
                         className="f1-btn-ghost w-100"
-                        onClick={() => navigate("/lap-chart")}
+                        onClick={() =>
+                          navigate(`/lap-chart?round=${activeRace.round}`)
+                        }
                       >
                         <span>Lap Chart Progression</span>
                       </button>

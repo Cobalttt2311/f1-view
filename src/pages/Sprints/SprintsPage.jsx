@@ -57,7 +57,9 @@ export default function SprintsPage() {
                 <div
                   key={s.round}
                   className="f1-sprint-feature-card"
-                  onClick={() => navigate("/weekend-hub")}
+                  onClick={() =>
+                    navigate(`/weekend-hub?round=${s.round}&tab=sprint-results`)
+                  }
                 >
                   <div className="sprint-card-top">
                     <div className="hero-meta-tags">
@@ -147,7 +149,11 @@ export default function SprintsPage() {
                     <tr
                       key={s.round}
                       className="clickable-row"
-                      onClick={() => navigate("/weekend-hub")}
+                      onClick={() =>
+                        navigate(
+                          `/weekend-hub?round=${s.round}&tab=sprint-results`
+                        )
+                      }
                     >
                       <td className="cell-round">
                         {String(s.round).padStart(2, "0")}
@@ -182,7 +188,9 @@ export default function SprintsPage() {
                           className="f1-row-action-btn"
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate("/weekend-hub");
+                            navigate(
+                              `/weekend-hub?round=${s.round}&tab=sprint-results`
+                            );
                           }}
                         >
                           <span>Weekend Hub</span>

@@ -17,6 +17,14 @@ export default function WeekendHubPage() {
   const { season } = useSeason();
   const [searchParams] = useSearchParams();
   const roundParam = Number(searchParams.get("round"));
+  const tabParam = searchParams.get("tab");
+  const validTabs = [
+    "race-results",
+    "qualifying",
+    "sprint-results",
+    "pit-stops",
+    "fastest-laps",
+  ];
   const [selectedRound, setSelectedRound] = useState(
     roundParam > 0 ? roundParam : 1
   );
@@ -26,7 +34,15 @@ export default function WeekendHubPage() {
       setSelectedRound(roundParam);
     }
   }, [roundParam]);
-  const [activeTab, setActiveTab] = useState("race-results");
+  const [activeTab, setActiveTab] = useState(
+    validTabs.includes(tabParam) ? tabParam : "race-results"
+  );
+
+  useEffect(() => {
+    if (tabParam && validTabs.includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
   const [svgFailed, setSvgFailed] = useState(false);
   const [heroFailed, setHeroFailed] = useState(false);
 

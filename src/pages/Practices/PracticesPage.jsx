@@ -147,7 +147,11 @@ export default function PracticesPage() {
             <button
               type="button"
               className="f1-btn-ghost w-100 mt-3"
-              onClick={() => navigate("/weekend-hub")}
+              onClick={() =>
+                navigate(
+                  `/weekend-hub?round=${practiceData.round || selectedRound}`
+                )
+              }
             >
               <span>Inspect Full Weekend Telemetry</span>
               <i className="fa-solid fa-arrow-right"></i>
