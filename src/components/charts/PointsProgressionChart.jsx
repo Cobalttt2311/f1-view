@@ -408,8 +408,10 @@ export default function PointsProgressionChart({ rawData }) {
 
       {/* 2. CHART CANVAS + RIGHT-SIDE DRIVER LEGEND RAIL */}
       <div className="chart-with-side-legend">
-        <div className="chart-canvas-flex" style={{ height: "440px" }}>
-          <Line data={chartData} options={options} />
+        <div className="chart-canvas-flex">
+          <div className="chart-canvas-inner">
+            <Line data={chartData} options={options} />
+          </div>
         </div>
 
         <div className="chart-side-legend-rail">

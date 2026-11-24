@@ -4565,6 +4565,7 @@ table .team-logo-circle {
 .lap-broadcast-scroll {
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   background: #0a0b10;
   border: 1px solid var(--f1-border);
   border-radius: var(--radius-md);
@@ -4618,6 +4619,14 @@ table .team-logo-circle {
 .chart-canvas-flex {
   flex: 1;
   min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.chart-canvas-inner {
+  width: 100%;
+  min-width: 760px;
+  height: 440px;
 }
 
 .chart-side-legend-rail {
@@ -4681,6 +4690,11 @@ table .team-logo-circle {
 @media (max-width: 820px) {
   .chart-with-side-legend {
     flex-direction: column;
+  }
+
+  .chart-canvas-inner {
+    min-width: 760px;
+    height: 360px;
   }
 
   .chart-side-legend-rail {
