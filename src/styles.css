@@ -2359,6 +2359,44 @@ table .team-logo-circle {
   color: var(--f1-text-muted);
 }
 
+.cal-next-timer-grid {
+  display: inline-flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 5px;
+  margin: 2px 0;
+}
+
+.cal-next-timer-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 24px;
+}
+
+.cal-next-timer-num {
+  font-size: 16px;
+  font-weight: 900;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+}
+
+.cal-next-timer-unit {
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--f1-text-muted);
+  margin-top: 2px;
+}
+
+.cal-next-timer-sep {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--f1-text-muted);
+  line-height: 1.05;
+}
+
 .cal-next-gp-sub {
   font-size: 10.5px;
   color: var(--f1-text-muted);
@@ -4706,6 +4744,212 @@ table .team-logo-circle {
     padding-top: 12px;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+}
+
+/* Split-Flap Flip Clock Countdown (Dashboard Hero) */
+.f1-flip-countdown {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.f1-flip-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.f1-flip-label {
+  font-family: "Formula1", var(--font-primary);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #ffffff;
+}
+
+.f1-flip-card {
+  position: relative;
+  width: 58px;
+  height: 62px;
+  border-radius: 8px;
+  background: #10131a;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  perspective: 260px;
+}
+
+.f1-flip-static,
+.f1-flip-leaf {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  backface-visibility: hidden;
+}
+
+.f1-flip-static span,
+.f1-flip-leaf span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Formula1", var(--font-heading);
+  font-size: 24px;
+  font-weight: 800;
+  color: #f8fafc;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.65);
+}
+
+.f1-flip-static-top,
+.f1-flip-leaf-top {
+  top: 0;
+  background: linear-gradient(180deg, #272c3c 0%, #1d212e 100%);
+  transform-origin: 50% 100%;
+}
+
+.f1-flip-static-top span,
+.f1-flip-leaf-top span {
+  top: 0;
+}
+
+.f1-flip-static-bottom,
+.f1-flip-leaf-bottom {
+  bottom: 0;
+  background: linear-gradient(180deg, #141722 0%, #0d0f16 100%);
+  transform-origin: 50% 0%;
+}
+
+.f1-flip-static-bottom span,
+.f1-flip-leaf-bottom span {
+  bottom: 0;
+}
+
+.f1-flip-anim-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  transform-style: preserve-3d;
+}
+
+.f1-flip-leaf-top {
+  z-index: 2;
+  animation: f1FlapTop 0.22s ease-in forwards;
+}
+
+.f1-flip-leaf-bottom {
+  z-index: 3;
+  transform: rotateX(90deg);
+  animation: f1FlapBottom 0.24s 0.18s ease-out forwards;
+}
+
+@keyframes f1FlapTop {
+  0% {
+    transform: rotateX(0deg);
+    filter: brightness(1);
+  }
+  100% {
+    transform: rotateX(-90deg);
+    filter: brightness(0.55);
+  }
+}
+
+@keyframes f1FlapBottom {
+  0% {
+    transform: rotateX(90deg);
+    filter: brightness(0.65);
+  }
+  100% {
+    transform: rotateX(0deg);
+    filter: brightness(1);
+  }
+}
+
+.f1-flip-crease {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.38);
+  box-shadow: none;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.f1-flip-hinge {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3.5px;
+  height: 11px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #e5e7eb 0%, #6b7280 50%, #d1d5db 100%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  z-index: 7;
+  pointer-events: none;
+}
+
+.f1-flip-hinge-left {
+  left: 0;
+}
+
+.f1-flip-hinge-right {
+  right: 0;
+}
+
+.f1-flip-colon {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  height: 60px;
+  padding: 0 1px;
+}
+
+.f1-flip-colon i {
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+@media (max-width: 520px) {
+  .f1-flip-countdown {
+    gap: 5px;
+  }
+
+  .f1-flip-card {
+    width: 44px;
+    height: 48px;
+    border-radius: 6px;
+  }
+
+  .f1-flip-static span,
+  .f1-flip-leaf span {
+    height: 48px;
+    font-size: 18px;
+  }
+
+  .f1-flip-colon {
+    height: 48px;
     gap: 6px;
   }
 }

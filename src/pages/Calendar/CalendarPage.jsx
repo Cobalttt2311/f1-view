@@ -183,38 +183,31 @@ export default function CalendarPage() {
   }, [activeRace?.round, season]);
 
   // Live countdown to nextSession
-  const [countdownStr, setCountdownStr] = useState("COMPLETED");
+  const [countdownParts, setCountdownParts] = useState(null);
   useEffect(() => {
     if (!nextSession || !nextSession.timestamp) {
-      setCountdownStr("COMPLETED");
+      setCountdownParts(null);
       return;
     }
     const targetTime = nextSession.timestamp;
-    const getHMS = () => {
+    const getParts = () => {
       const diff = targetTime - Date.now();
       if (diff <= 0) return null;
       return {
-        hours: Math.floor(diff / (1000 * 60 * 60)),
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
         mins: Math.floor((diff / 1000 / 60) % 60),
         secs: Math.floor((diff / 1000) % 60),
       };
     };
 
-    const formatHMS = (h, m, s) =>
-      `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-
     const updateTimer = () => {
-      const parts = getHMS();
-      if (!parts) {
-        setCountdownStr("COMPLETED");
-        return;
-      }
-      setCountdownStr(formatHMS(parts.hours, parts.mins, parts.secs));
+      setCountdownParts(getParts());
     };
 
-    const initialParts = getHMS();
+    const initialParts = getParts();
     if (!initialParts) {
-      setCountdownStr("COMPLETED");
+      setCountdownParts(null);
       return;
     }
 
@@ -230,13 +223,12 @@ export default function CalendarPage() {
         updateTimer();
         return;
       }
-      setCountdownStr(
-        formatHMS(
-          Math.round(initialParts.hours * eased),
-          Math.round(initialParts.mins * eased),
-          Math.round(initialParts.secs * eased)
-        )
-      );
+      setCountdownParts({
+        days: Math.round(initialParts.days * eased),
+        hours: Math.round(initialParts.hours * eased),
+        mins: Math.round(initialParts.mins * eased),
+        secs: Math.round(initialParts.secs * eased),
+      });
       rafId = requestAnimationFrame(animateIntro);
     };
 
@@ -366,13 +358,41 @@ export default function CalendarPage() {
                 <span className="cal-season-sub">{season} Season</span>
               </div>
 
-              {nextSession && countdownStr !== "COMPLETED" ? (
+              {nextSession && countdownParts ? (
                 <div className="cal-next-countdown-mini">
                   <div className="cal-next-meta">
                     <span className="cal-next-lbl">
                       Next Session | {nextSession.label}
                     </span>
-                    <strong className="cal-next-timer">{countdownStr}</strong>
+                    <div className="cal-next-timer-grid">
+                      <div className="cal-next-timer-cell">
+                        <strong className="cal-next-timer-num">
+                          {String(countdownParts.days).padStart(2, "0")}
+                        </strong>
+                        <span className="cal-next-timer-unit">DAYS</span>
+                      </div>
+                      <span className="cal-next-timer-sep">:</span>
+                      <div className="cal-next-timer-cell">
+                        <strong className="cal-next-timer-num">
+                          {String(countdownParts.hours).padStart(2, "0")}
+                        </strong>
+                        <span className="cal-next-timer-unit">HRS</span>
+                      </div>
+                      <span className="cal-next-timer-sep">:</span>
+                      <div className="cal-next-timer-cell">
+                        <strong className="cal-next-timer-num">
+                          {String(countdownParts.mins).padStart(2, "0")}
+                        </strong>
+                        <span className="cal-next-timer-unit">MIN</span>
+                      </div>
+                      <span className="cal-next-timer-sep">:</span>
+                      <div className="cal-next-timer-cell">
+                        <strong className="cal-next-timer-num">
+                          {String(countdownParts.secs).padStart(2, "0")}
+                        </strong>
+                        <span className="cal-next-timer-unit">SEC</span>
+                      </div>
+                    </div>
                     <span className="cal-next-gp-sub">
                       {nextSession.race.grand_prix_name}
                     </span>

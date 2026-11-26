@@ -8,6 +8,7 @@ import DriverBadge from "../../components/common/DriverBadge";
 import TeamBadge from "../../components/common/TeamBadge";
 import WikiLink from "../../components/common/WikiLink";
 import AnimatedNumber from "../../components/common/AnimatedNumber";
+import FlipCountdown from "../../components/common/FlipCountdown";
 import { TableRowsSkeleton } from "../../components/common/Skeleton";
 import { CountryFlag } from "../../utils/flags";
 import {
@@ -392,35 +393,12 @@ export default function DashboardPage() {
                   <span className="countdown-live-dot" />
                   Next Session Countdown
                 </span>
-                <div className="countdown-digits-row">
-                  <div className="countdown-unit">
-                    <span className="countdown-num">
-                      {String(countdown.days).padStart(2, "0")}
-                    </span>
-                    <span className="countdown-lbl">DAYS</span>
-                  </div>
-                  <span className="countdown-divider" />
-                  <div className="countdown-unit">
-                    <span className="countdown-num">
-                      {String(countdown.hours).padStart(2, "0")}
-                    </span>
-                    <span className="countdown-lbl">HRS</span>
-                  </div>
-                  <span className="countdown-divider" />
-                  <div className="countdown-unit">
-                    <span className="countdown-num">
-                      {String(countdown.mins).padStart(2, "0")}
-                    </span>
-                    <span className="countdown-lbl">MINS</span>
-                  </div>
-                  <span className="countdown-divider" />
-                  <div className="countdown-unit">
-                    <span className="countdown-num">
-                      {String(countdown.secs).padStart(2, "0")}
-                    </span>
-                    <span className="countdown-lbl">SECS</span>
-                  </div>
-                </div>
+                <FlipCountdown
+                  days={countdown.days}
+                  hours={countdown.hours}
+                  mins={countdown.mins}
+                  secs={countdown.secs}
+                />
               </div>
             )}
 
